@@ -6,7 +6,6 @@
 - `lib/` owns configuration, encrypted storage, CLI behavior, and RFC 6238 TOTP generation.
 - `web/server.py` provides local HTTP transport; browser assets live in `web/static/`.
 - `tests/` contains disposable checks; `docs/` records security, design, and migration contracts.
-- `wantod/sat.sh` and `wantod/sat.sh.copy` are legacy rollback references, not active source.
 
 ## Build, Test, and Development Commands
 

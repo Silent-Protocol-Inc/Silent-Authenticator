@@ -2,7 +2,8 @@
 
 set -euo pipefail
 
-SAT_PROJECT_ROOT="${SAT_PROJECT_ROOT:-/home/Erpan/SAT}"
+launcher_path="$(readlink -f -- "${BASH_SOURCE[0]}")"
+SAT_PROJECT_ROOT="${SAT_PROJECT_ROOT:-$(cd -- "$(dirname -- "$launcher_path")/.." && pwd -P)}"
 SAT_ENTRYPOINT="$SAT_PROJECT_ROOT/sat.sh"
 
 if [[ ! -x "$SAT_ENTRYPOINT" ]]; then

@@ -84,6 +84,9 @@ parallel_count="$(SAT_HOME="$concurrent_home" SAT_MASTER_PASS_FD=3 "$SAT_PROJECT
 
 sat init --json | jq -e '.status == "created"' >/dev/null
 [[ "$(sat version)" == 'SAT - Silent Authenticator Tool 2.1.0' ]] || fail_test 'CLI version must match the 2.1.0 release'
+[[ "$("$SAT_PROJECT_ROOT/bin/sat" version)" == 'SAT - Silent Authenticator Tool 2.1.0' ]] || fail_test 'repository launcher must resolve the project root'
+ln -s "$SAT_PROJECT_ROOT/bin/sat" "$SAT_TEST_ROOT/sat-launcher"
+[[ "$("$SAT_TEST_ROOT/sat-launcher" version)" == 'SAT - Silent Authenticator Tool 2.1.0' ]] || fail_test 'symlinked launcher must resolve the repository root'
 json_add '{"label":"github-main","issuer":"GitHub","account":"tester@example.invalid","secret":"JBSWY3DPEHPK3PXP","digits":6,"period":30,"algo":"SHA1"}' | jq -e '.status == "created"' >/dev/null
 
 set +e
