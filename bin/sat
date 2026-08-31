@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SAT_PROJECT_ROOT="${SAT_PROJECT_ROOT:-/home/Erpan/SAT}"
+SAT_ENTRYPOINT="$SAT_PROJECT_ROOT/sat.sh"
+
+if [[ ! -x "$SAT_ENTRYPOINT" ]]; then
+	printf 'Error: SAT entrypoint tidak ditemukan atau tidak executable: %s\n' "$SAT_ENTRYPOINT" >&2
+	exit 7
+fi
+
+exec "$SAT_ENTRYPOINT" "$@"
