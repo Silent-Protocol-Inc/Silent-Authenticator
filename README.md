@@ -11,7 +11,7 @@ SAT is a local-first TOTP manager with an encrypted OpenSSL vault, a Bash CLI, a
 
 Install Bash, OpenSSL, jq, Python 3, `flock`, zip, and unzip. QR scanning additionally uses `zbarimg`; clipboard support is optional.
 
-Install the maintained launcher with `install -m 700 bin/sat /usr/local/bin/sat` to make this repository available as the global `sat` command. It delegates to `/home/Erpan/SAT/sat.sh`; `wantod/sat.sh` remains a legacy rollback reference.
+From the repository root, create a global launcher symlink with `sudo ln -s "$PWD/bin/sat" /usr/local/bin/sat`. The launcher resolves the repository location from its real path, or from `SAT_PROJECT_ROOT` when an explicit checkout path is needed.
 
 ```bash
 chmod +x sat.sh
