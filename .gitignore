@@ -1,0 +1,24 @@
+# Runtime secrets and state
+.sat/
+*.vault
+*.gpg
+*.gpg.*
+*.pem
+*.pid
+*.log
+
+# Generated archives and legacy bundles
+*.zip
+sat_backup_*/
+sat_portable_*/
+spm_portable_*/
+
+# Test and language caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Editor and operating-system files
+.DS_Store
+.idea/
+.vscode/
