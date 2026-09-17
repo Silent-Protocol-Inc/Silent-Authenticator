@@ -26,4 +26,13 @@ load_saved_language
 [[ "$SAT_LANG" == en ]]
 [[ "$(stat -c '%a' "$SAT_CONFIG_FILE")" == 600 ]]
 
+if command -v script >/dev/null 2>&1; then
+	terminal_home="$(mktemp -d "${TMPDIR:-/tmp}/sat-ui-pty.XXXXXX")"
+	printf '1\n0\n' | SAT_HOME="$terminal_home" script -qec "'$SAT_PROJECT_ROOT/sat.sh' menu" /dev/null >"$terminal_home/output"
+	grep -Fq 'Choose your language / Pilih bahasa' "$terminal_home/output"
+	grep -Fq '1) List OTP entries' "$terminal_home/output"
+	grep -Fqx 'language=en' "$terminal_home/config"
+	rm -rf -- "$terminal_home"
+fi
+
 printf 'Terminal UI checks passed.\n'

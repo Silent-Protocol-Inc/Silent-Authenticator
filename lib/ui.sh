@@ -188,9 +188,8 @@ save_language() {
 select_terminal_language() {
 	local force="${1:-no}" choice
 	[[ "$force" == yes || "$SAT_LANG_EXPLICIT" == no ]] || return 0
-	[[ -t 0 && -t 1 ]] || { load_saved_language; return; }
+	[[ -t 0 && -t 1 ]] || { load_saved_language; return 0; }
 	load_saved_language
-	if [[ "$force" != yes && -f "$SAT_CONFIG_FILE" ]]; then return; fi
 	while :; do
 		printf '\n'; ui language_choice
 		IFS= read -r choice || return 1

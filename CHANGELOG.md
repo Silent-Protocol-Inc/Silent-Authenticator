@@ -4,6 +4,12 @@ All notable changes to SAT are documented here. SAT follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.3.2] - 2026-09-17
+
+### Fixed
+
+- Show the language selector before every interactive terminal menu, while retaining the stored choice and explicit `SAT_LANG` automation override.
+
 ## [1.3.1] - 2026-09-17
 
 ### Fixed
