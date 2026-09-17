@@ -1,11 +1,13 @@
 # SAT — Silent Authenticator Tool
 
 [![GitHub stars](https://img.shields.io/github/stars/Silent-Protocol-Inc/Silent-Authenticator?style=flat-square)](https://github.com/Silent-Protocol-Inc/Silent-Authenticator/stargazers)
+[![GitHub release](https://img.shields.io/github/v/release/Silent-Protocol-Inc/Silent-Authenticator?display_name=tag&style=flat-square)](https://github.com/Silent-Protocol-Inc/Silent-Authenticator/releases)
+[![Verify SAT](https://github.com/Silent-Protocol-Inc/Silent-Authenticator/actions/workflows/ci.yml/badge.svg)](https://github.com/Silent-Protocol-Inc/Silent-Authenticator/actions/workflows/ci.yml)
 [![GitHub last commit](https://img.shields.io/github/last-commit/Silent-Protocol-Inc/Silent-Authenticator?style=flat-square)](https://github.com/Silent-Protocol-Inc/Silent-Authenticator/commits/main)
 [![GitHub top language](https://img.shields.io/github/languages/top/Silent-Protocol-Inc/Silent-Authenticator?style=flat-square)](https://github.com/Silent-Protocol-Inc/Silent-Authenticator)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=flat-square)](LICENSE)
 
-SAT is a local-first TOTP manager with an encrypted OpenSSL vault, a Bash CLI, and an optional Python web interface. Version 1.2.0 keeps the legacy `otp.vault` encryption format while separating vault policy, CLI commands, HTTP transport, and browser assets.
+SAT is a local-first TOTP manager with an encrypted OpenSSL vault, a Bash CLI, and an optional Python web interface. Version 1.3.0 keeps the legacy `otp.vault` encryption format while separating vault policy, CLI commands, HTTP transport, and browser assets.
 
 ## Project Structure
 

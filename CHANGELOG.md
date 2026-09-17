@@ -4,6 +4,8 @@ All notable changes to SAT are documented here. SAT follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-09-17
+
 ### Added
 
 - Added first-run terminal language selection and a persisted English/Bahasa Indonesia preference for interactive menus.
