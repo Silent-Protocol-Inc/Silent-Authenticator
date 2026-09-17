@@ -1,147 +1,33 @@
 <!doctype html>
-<html lang="id" data-theme="dark">
+<html lang="id" data-theme="silent-obsidian">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark light">
   <title>SAT · Silent Authenticator Tool</title>
+  <script>!function(){try{var t=localStorage.getItem("sat.theme"),a=["silent-obsidian","cyber-teal","midnight-indigo","graphite-gold","arctic-frost","paper-terminal","matrix-terminal","crimson-security","aurora-glass","monochrome-zero"],m={"silent-obsidian":"executive","cyber-teal":"topnav","midnight-indigo":"focused","graphite-gold":"briefing","arctic-frost":"office","paper-terminal":"ledger","matrix-terminal":"console","crimson-security":"security","aurora-glass":"layered","monochrome-zero":"editorial"};if(!a.includes(t)){var l=localStorage.getItem("sat-theme");t=l==="light"?"arctic-frost":l==="dark"?"silent-obsidian":"system"}t=t==="system"?(matchMedia("(prefers-color-scheme: light)").matches?"arctic-frost":"silent-obsidian"):t;document.documentElement.dataset.theme=t;document.documentElement.dataset.layout=m[t]}catch(e){}}();</script>
   <link rel="stylesheet" href="/styles.css">
   <script src="/app.js" defer></script>
 </head>
 <body>
+  <div class="app-background" aria-hidden="true"><i class="bg-gradient"></i><i class="bg-grid"></i><i class="bg-noise"></i><i class="bg-glow"></i><i class="bg-scanline"></i></div>
   <a class="skip-link" href="#main" data-i18n="skip">Lewati ke konten</a>
-
   <header class="masthead">
-    <div class="masthead__identity">
-      <span class="masthead__mark" aria-hidden="true">S/A</span>
-      <div>
-        <p class="eyebrow">SAT–02 · LOCAL SECURITY INSTRUMENT</p>
-        <h1>Silent Authenticator</h1>
-      </div>
-    </div>
-    <p class="masthead__argument" data-i18n="argument">Kode penting tetap lokal, terlihat hanya ketika dibutuhkan.</p>
+    <div class="masthead__identity"><span class="masthead__mark" aria-hidden="true"><span>S</span><i></i><span>A</span></span><div><p class="eyebrow">SAT–02 · LOCAL SECURITY INSTRUMENT</p><h1>Silent <span>Authenticator</span></h1></div></div>
+    <div class="masthead__tools"><p class="masthead__argument" data-i18n="argument">Kode penting tetap lokal, terlihat hanya ketika dibutuhkan.</p><div class="masthead__actions"><span class="privacy-indicator"><i aria-hidden="true"></i><span data-i18n="localOnly">Lokal saja</span></span><button id="themeButton" class="button--quiet icon-button" type="button" aria-haspopup="dialog" aria-controls="themePanel" aria-expanded="false"><span aria-hidden="true">◐</span><span data-i18n="appearance">Tampilan</span></button><label class="language-field" for="languageSelect"><span class="sr-only" data-i18n="language">Bahasa</span><select id="languageSelect" aria-label="Bahasa"><option value="id">ID</option><option value="en">EN</option></select></label></div></div>
   </header>
-
+  <nav class="layout-nav" aria-label="Bagian SAT"><a href="#controls" data-i18n="navWorkspace">Workspace</a><a href="#metrics" data-i18n="navMetrics">Status</a><a href="#vault" data-i18n="navVault">Vault</a><a href="#system-note" data-i18n="navSecurity">Keamanan</a></nav>
+  <section class="theme-panel" id="themePanel" role="dialog" aria-modal="false" aria-labelledby="themePanelTitle" hidden><div class="theme-panel__head"><div><p class="eyebrow" data-i18n="appearance">TAMPILAN</p><h2 id="themePanelTitle" data-i18n="appearance">Tampilan</h2></div><button id="closeThemePanel" class="button--quiet icon-button" type="button" aria-label="Tutup">×</button></div><button id="systemThemeButton" class="system-theme" type="button" role="radio" aria-checked="false"><span><strong data-i18n="systemAppearance">Gunakan tampilan sistem</strong><small data-i18n="systemAppearanceHelp">Gelap: Silent Obsidian · Terang: Arctic Frost</small></span><i aria-hidden="true"></i></button><div id="themeGrid" class="theme-grid" role="radiogroup" aria-label="Pilihan tema"></div></section>
   <main id="main" tabindex="-1">
-    <section class="access-gate" id="accessGate" aria-labelledby="accessTitle" hidden>
-      <div>
-        <p class="eyebrow" data-i18n="accessEyebrow">AKSES DIBUTUHKAN</p>
-        <h2 id="accessTitle" data-i18n="accessTitle">Hubungkan ke vault</h2>
-        <p data-i18n="accessHelp">Token hanya disimpan dalam memori tab ini dan hilang saat halaman ditutup.</p>
-      </div>
-      <form id="accessForm" class="access-gate__form">
-        <label for="tokenInput" data-i18n="tokenLabel">Token akses</label>
-        <input id="tokenInput" type="password" autocomplete="current-password" required>
-        <button type="submit" data-i18n="connect">Hubungkan</button>
-      </form>
-    </section>
-
-    <section class="command-bar" aria-label="Kontrol vault" data-i18n-aria="controls">
-      <label class="search-field" for="searchInput">
-        <span data-i18n="search">Cari akun</span>
-        <input id="searchInput" type="search" autocomplete="off" placeholder="issuer, label, account">
-      </label>
-      <div class="command-bar__actions">
-        <button id="addButton" type="button" data-i18n="add">Tambah OTP</button>
-        <button id="themeButton" class="button--quiet" type="button" aria-pressed="false" data-i18n="theme">Tema terang</button>
-        <label class="language-field" for="languageSelect">
-          <span data-i18n="language">Bahasa</span>
-          <select id="languageSelect">
-            <option value="id">Indonesia</option>
-            <option value="en">English</option>
-          </select>
-        </label>
-      </div>
-    </section>
-
-    <section class="status-band" aria-label="Status vault" data-i18n-aria="statusLabel">
-      <div><span data-i18n="total">Total</span><data id="totalCount" value="0">0</data></div>
-      <div><span data-i18n="visible">Terlihat</span><data id="visibleCount" value="0">0</data></div>
-      <div><span data-i18n="sync">Sinkron</span><time id="syncTime">—</time></div>
-      <div><span data-i18n="privacy">Privasi</span><strong data-i18n="privacyValue">Tersembunyi</strong></div>
-    </section>
-
-    <section class="editor" id="editor" aria-labelledby="editorTitle" hidden>
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow" id="editorMode" data-i18n="newEntry">ENTRI BARU</p>
-          <h2 id="editorTitle" data-i18n="editorTitle">Tambahkan authenticator</h2>
-        </div>
-        <button id="closeEditor" class="button--quiet" type="button" data-i18n="close">Tutup</button>
-      </div>
-      <form id="entryForm" class="entry-form">
-        <input id="currentLabel" type="hidden">
-        <label><span data-i18n="label">Label</span><input id="labelInput" maxlength="128" required></label>
-        <label><span data-i18n="issuer">Issuer</span><input id="issuerInput" maxlength="256"></label>
-        <label><span data-i18n="account">Account</span><input id="accountInput" maxlength="256"></label>
-        <label><span data-i18n="secret">Secret BASE32</span><input id="secretInput" type="password" autocomplete="off" spellcheck="false"></label>
-        <label><span data-i18n="digits">Digits</span><select id="digitsInput"><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></label>
-        <label><span data-i18n="period">Period</span><input id="periodInput" type="number" min="15" max="90" value="30"></label>
-        <label><span data-i18n="algorithm">Algorithm</span><select id="algorithmInput"><option>SHA1</option><option>SHA256</option><option>SHA512</option></select></label>
-        <label class="entry-form__qr"><span data-i18n="qr">QR OTP (PNG/JPG/WebP, maks. 1 MB)</span><input id="qrInput" type="file" accept="image/png,image/jpeg,image/gif,image/webp"></label>
-        <div class="entry-form__actions">
-          <button id="saveButton" type="submit" data-i18n="save">Simpan</button>
-          <button id="scanButton" class="button--quiet" type="button" data-i18n="scan">Baca QR</button>
-        </div>
-      </form>
-    </section>
-
-    <section class="vault" aria-labelledby="vaultTitle">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow" data-i18n="vaultEyebrow">VAULT TERENKRIPSI</p>
-          <h2 id="vaultTitle" data-i18n="vaultTitle">Authenticator</h2>
-        </div>
-        <button id="refreshButton" class="button--quiet" type="button" data-i18n="refresh">Muat ulang</button>
-      </div>
-
-      <div class="state-panel" id="statePanel" data-state="loading" role="status" aria-live="polite">
-        <strong id="stateTitle" data-i18n="loading">Membuka daftar…</strong>
-        <span id="stateMessage" data-i18n="loadingHelp">Vault tetap terenkripsi di disk.</span>
-      </div>
-      <ul class="otp-grid" id="otpGrid" aria-live="polite"></ul>
-    </section>
-
-    <aside class="honest-note" aria-labelledby="honestTitle">
-      <p class="eyebrow" data-i18n="honestEyebrow">BATAS SISTEM</p>
-      <h2 id="honestTitle" data-i18n="honestTitle">Keamanan berhenti di perangkat ini</h2>
-      <p data-i18n="honestText">SAT melindungi vault saat tersimpan. Perangkat yang sudah dikuasai pihak lain tetap dapat merekam layar atau input saat vault sedang digunakan.</p>
-    </aside>
+    <section class="access-gate" id="accessGate" aria-labelledby="accessTitle" hidden><div class="access-gate__intro"><p class="eyebrow" data-i18n="accessEyebrow">AKSES DIBUTUHKAN</p><div class="vault-state"><i aria-hidden="true"></i><span data-i18n="vaultDisconnected">Vault · Terputus</span></div><h2 id="accessTitle" data-i18n="accessTitle">Hubungkan ke vault</h2><p data-i18n="accessHelp">Token hanya disimpan dalam memori tab ini dan hilang saat halaman ditutup.</p></div><form id="accessForm" class="access-gate__form"><label for="tokenInput" data-i18n="tokenLabel">Token akses</label><div class="token-field"><input id="tokenInput" type="password" autocomplete="current-password" required><button id="tokenVisibilityButton" class="button--quiet" type="button" aria-pressed="false" data-i18n="showToken">Tampilkan</button></div><button id="connectButton" type="submit"><span data-i18n="connect">Hubungkan</span></button></form></section>
+    <section class="command-bar" id="controls" aria-label="Kontrol vault" data-i18n-aria="controls"><label class="search-field" for="searchInput"><span data-i18n="search">Cari akun</span><input id="searchInput" type="search" autocomplete="off" placeholder="issuer, label, account"></label><div class="command-bar__actions"><button id="addButton" type="button"><span aria-hidden="true">+</span> <span data-i18n="add">Tambah OTP</span></button><label class="language-field language-field--toolbar" for="languageSelectToolbar"><span data-i18n="language">Bahasa</span><select id="languageSelectToolbar"><option value="id">Indonesia</option><option value="en">English</option></select></label></div></section>
+    <section class="status-band" id="metrics" aria-label="Status vault" data-i18n-aria="statusLabel"><div><span data-i18n="total">Total</span><data id="totalCount" value="0">0</data></div><div><span data-i18n="visible">Terlihat</span><data id="visibleCount" value="0">0</data></div><div><span data-i18n="sync">Sinkron</span><time id="syncTime">—</time></div><div><span data-i18n="privacy">Privasi</span><strong data-i18n="privacyValue">Tersembunyi</strong></div></section>
+    <section class="editor" id="editor" aria-labelledby="editorTitle" hidden><div class="section-heading"><div><p class="eyebrow" id="editorMode" data-i18n="newEntry">ENTRI BARU</p><h2 id="editorTitle" data-i18n="editorTitle">Tambahkan authenticator</h2></div><button id="closeEditor" class="button--quiet" type="button" data-i18n="close">Tutup</button></div><form id="entryForm" class="entry-form"><input id="currentLabel" type="hidden"><label><span data-i18n="label">Label</span><input id="labelInput" maxlength="128" required></label><label><span data-i18n="issuer">Issuer</span><input id="issuerInput" maxlength="256"></label><label><span data-i18n="account">Account</span><input id="accountInput" maxlength="256"></label><label><span data-i18n="secret">Secret BASE32</span><input id="secretInput" type="password" autocomplete="off" spellcheck="false"></label><label><span data-i18n="digits">Digits</span><select id="digitsInput"><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></label><label><span data-i18n="period">Period</span><input id="periodInput" type="number" min="15" max="90" value="30"></label><label><span data-i18n="algorithm">Algorithm</span><select id="algorithmInput"><option>SHA1</option><option>SHA256</option><option>SHA512</option></select></label><label class="entry-form__qr"><span data-i18n="qr">QR OTP (PNG/JPG/GIF/WebP, maks. 1 MB)</span><input id="qrInput" type="file" accept="image/png,image/jpeg,image/gif,image/webp"></label><div class="entry-form__actions"><button id="saveButton" type="submit" data-i18n="save">Simpan</button><button id="scanButton" class="button--quiet" type="button" data-i18n="scan">Baca QR</button></div></form></section>
+    <section class="vault" aria-labelledby="vaultTitle"><div class="section-heading"><div><p class="eyebrow" data-i18n="vaultEyebrow">VAULT TERENKRIPSI</p><h2 id="vaultTitle" data-i18n="vaultTitle">Authenticator</h2></div><button id="refreshButton" class="button--quiet" type="button" data-i18n="refresh">Muat ulang</button></div><div class="state-panel" id="statePanel" data-state="loading" role="status" aria-live="polite"><strong id="stateTitle" data-i18n="loading">Membuka daftar…</strong><span id="stateMessage" data-i18n="loadingHelp">Vault tetap terenkripsi di disk.</span><button id="emptyAddButton" type="button" hidden><span aria-hidden="true">+</span> <span data-i18n="add">Tambah OTP</span></button></div><ul class="otp-grid" id="otpGrid" aria-live="polite"></ul></section>
+    <aside class="honest-note" id="system-note" aria-labelledby="honestTitle"><p class="eyebrow" data-i18n="honestEyebrow">BATAS SISTEM</p><h2 id="honestTitle" data-i18n="honestTitle">Keamanan berhenti di perangkat ini</h2><p data-i18n="honestText">SAT melindungi vault saat tersimpan. Perangkat yang sudah dikuasai pihak lain tetap dapat merekam layar atau input saat vault sedang digunakan.</p></aside>
   </main>
-
-  <dialog id="deleteDialog" aria-labelledby="deleteTitle">
-    <form method="dialog">
-      <p class="eyebrow" data-i18n="destructive">TINDAKAN DESTRUKTIF</p>
-      <h2 id="deleteTitle" data-i18n="deleteTitle">Hapus authenticator?</h2>
-      <p id="deleteDescription"></p>
-      <div class="dialog-actions">
-        <button value="cancel" class="button--quiet" data-i18n="cancel">Batal</button>
-        <button id="confirmDelete" value="confirm" class="button--danger" data-i18n="delete">Hapus</button>
-      </div>
-    </form>
-  </dialog>
-
+  <dialog id="deleteDialog" aria-labelledby="deleteTitle"><form method="dialog"><p class="eyebrow" data-i18n="destructive">TINDAKAN DESTRUKTIF</p><h2 id="deleteTitle" data-i18n="deleteTitle">Hapus authenticator?</h2><p id="deleteDescription"></p><div class="dialog-actions"><button value="cancel" class="button--quiet" data-i18n="cancel">Batal</button><button id="confirmDelete" value="confirm" class="button--danger" data-i18n="delete">Hapus</button></div></form></dialog>
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
-
-  <template id="otpTemplate">
-    <li class="otp-card">
-      <article>
-        <header class="otp-card__header">
-          <div><p class="otp-card__issuer"></p><h3 class="otp-card__label"></h3><p class="otp-card__account"></p></div>
-          <span class="otp-card__algorithm"></span>
-        </header>
-        <div class="otp-card__value" data-state="hidden">
-          <data class="otp-card__code" value="">••• •••</data>
-          <div class="otp-card__timer"><progress max="30" value="0"></progress><span>—</span></div>
-        </div>
-        <footer class="otp-card__actions">
-          <button class="reveal-button" type="button" data-i18n="reveal">Tampilkan</button>
-          <button class="copy-button button--quiet" type="button" disabled data-i18n="copy">Salin</button>
-          <button class="edit-button button--quiet" type="button" data-i18n="edit">Edit</button>
-          <button class="delete-button button--danger-quiet" type="button" data-i18n="delete">Hapus</button>
-        </footer>
-      </article>
-    </li>
-  </template>
+  <template id="otpTemplate"><li class="otp-card"><article><header class="otp-card__header"><div><p class="otp-card__issuer"></p><h3 class="otp-card__label"></h3><p class="otp-card__account"></p></div><span class="otp-card__algorithm"></span></header><div class="otp-card__value" data-state="hidden"><data class="otp-card__code" value="">••• •••</data><div class="otp-card__timer"><progress max="30" value="0"></progress><span>—</span></div></div><footer class="otp-card__actions"><button class="reveal-button" type="button" data-i18n="reveal">Tampilkan</button><button class="copy-button button--quiet" type="button" disabled data-i18n="copy">Salin</button><button class="edit-button button--quiet" type="button" data-i18n="edit">Edit</button><button class="delete-button button--danger-quiet" type="button" data-i18n="delete">Hapus</button></footer></article></li></template>
 </body>
 </html>

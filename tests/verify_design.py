@@ -52,6 +52,7 @@ def main() -> None:
 	require("prefers-reduced-motion: reduce" in CSS, "reduced-motion path")
 	require("forced-colors: active" in CSS, "forced-colors path")
 	require("min-height: var(--sat-control-size)" in CSS and "--sat-control-size: 2.75rem" in CSS, "44px control target")
+	require(".layout-nav a{min-height:var(--sat-control-size)}" in CSS, "mobile navigation must meet the 44px touch target")
 	require("innerHTML" not in JS and "insertAdjacentHTML" not in JS, "untrusted text must use DOM APIs")
 	require(not re.search(r"token.*localStorage|localStorage.*token", JS, re.IGNORECASE), "token cannot use localStorage")
 	require("transition: all" not in CSS, "no transition-all")

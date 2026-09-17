@@ -4,11 +4,11 @@ const copy = {
   id: {
     skip: "Lewati ke konten", argument: "Kode penting tetap lokal, terlihat hanya ketika dibutuhkan.", accessEyebrow: "AKSES DIBUTUHKAN",
     accessTitle: "Hubungkan ke vault", accessHelp: "Token hanya disimpan dalam memori tab ini dan hilang saat halaman ditutup.", tokenLabel: "Token akses",
-    connect: "Hubungkan", controls: "Kontrol vault", search: "Cari akun", add: "Tambah OTP", theme: "Tema terang", themeDark: "Tema gelap", language: "Bahasa",
+    connect: "Hubungkan", controls: "Kontrol vault", search: "Cari akun", add: "Tambah OTP", appearance: "Tampilan", language: "Bahasa", localOnly: "Lokal saja", vaultDisconnected: "Vault · Terputus", showToken: "Tampilkan", hideToken: "Sembunyikan", systemAppearance: "Gunakan tampilan sistem", systemAppearanceHelp: "Gelap: Silent Obsidian · Terang: Arctic Frost", navWorkspace: "Workspace", navMetrics: "Status", navVault: "Vault", navSecurity: "Keamanan",
     statusLabel: "Status vault", total: "Total", visible: "Terlihat", sync: "Sinkron", privacy: "Privasi", privacyValue: "Tersembunyi",
     newEntry: "ENTRI BARU", editEntry: "EDIT ENTRI", editorTitle: "Tambahkan authenticator", editorEditTitle: "Perbarui authenticator", close: "Tutup",
     label: "Label", issuer: "Issuer", account: "Account", secret: "Secret BASE32", digits: "Digits", period: "Period", algorithm: "Algorithm",
-    qr: "QR OTP (PNG/JPG/WebP, maks. 1 MB)", save: "Simpan", scan: "Baca QR", vaultEyebrow: "VAULT TERENKRIPSI", vaultTitle: "Authenticator",
+    qr: "QR OTP (PNG/JPG/GIF/WebP, maks. 1 MB)", qrChooseFile: "Pilih file QR terlebih dahulu.", qrTooLarge: "QR maksimal 1 MB.", save: "Simpan", scan: "Baca QR", vaultEyebrow: "VAULT TERENKRIPSI", vaultTitle: "Authenticator",
     refresh: "Muat ulang", loading: "Membuka daftar…", loadingHelp: "Vault tetap terenkripsi di disk.", empty: "Vault masih kosong", emptyHelp: "Tambahkan authenticator pertama untuk mulai.",
     ready: "Vault siap", readyHelp: "Kode tetap tersembunyi sampai Anda memilih Tampilkan.", unauthorized: "Token ditolak", unauthorizedHelp: "Masukkan token akses yang benar.",
     offline: "Tidak terhubung", offlineHelp: "Periksa server SAT lalu muat ulang.", error: "Permintaan gagal", reveal: "Tampilkan", hide: "Sembunyikan", copy: "Salin", copied: "Kode disalin",
@@ -19,10 +19,10 @@ const copy = {
   en: {
     skip: "Skip to content", argument: "Important codes stay local and appear only when needed.", accessEyebrow: "ACCESS REQUIRED", accessTitle: "Connect to the vault",
     accessHelp: "The token stays in this tab's memory and disappears when the page closes.", tokenLabel: "Access token", connect: "Connect", controls: "Vault controls",
-    search: "Search accounts", add: "Add OTP", theme: "Light theme", themeDark: "Dark theme", language: "Language", statusLabel: "Vault status", total: "Total",
+    search: "Search accounts", add: "Add OTP", appearance: "Appearance", language: "Language", localOnly: "Local only", vaultDisconnected: "Vault · Disconnected", showToken: "Show", hideToken: "Hide", systemAppearance: "Use system appearance", systemAppearanceHelp: "Dark: Silent Obsidian · Light: Arctic Frost", navWorkspace: "Workspace", navMetrics: "Status", navVault: "Vault", navSecurity: "Security", statusLabel: "Vault status", total: "Total",
     visible: "Visible", sync: "Synced", privacy: "Privacy", privacyValue: "Hidden", newEntry: "NEW ENTRY", editEntry: "EDIT ENTRY", editorTitle: "Add authenticator",
     editorEditTitle: "Update authenticator", close: "Close", label: "Label", issuer: "Issuer", account: "Account", secret: "BASE32 secret", digits: "Digits",
-    period: "Period", algorithm: "Algorithm", qr: "OTP QR (PNG/JPG/WebP, max 1 MB)", save: "Save", scan: "Read QR", vaultEyebrow: "ENCRYPTED VAULT",
+    period: "Period", algorithm: "Algorithm", qr: "OTP QR (PNG/JPG/GIF/WebP, max 1 MB)", qrChooseFile: "Choose a QR file first.", qrTooLarge: "QR files must be 1 MB or smaller.", save: "Save", scan: "Read QR", vaultEyebrow: "ENCRYPTED VAULT",
     vaultTitle: "Authenticators", refresh: "Reload", loading: "Opening list…", loadingHelp: "The vault stays encrypted on disk.", empty: "The vault is empty",
     emptyHelp: "Add the first authenticator to begin.", ready: "Vault ready", readyHelp: "Codes stay hidden until you choose Reveal.", unauthorized: "Token rejected",
     unauthorizedHelp: "Enter the correct access token.", offline: "Not connected", offlineHelp: "Check the SAT server and reload.", error: "Request failed", reveal: "Reveal",
@@ -34,14 +34,22 @@ const copy = {
 };
 
 const elements = Object.fromEntries([
-  "accessGate", "accessForm", "tokenInput", "searchInput", "addButton", "themeButton", "languageSelect", "totalCount", "visibleCount", "syncTime",
+  "accessGate", "accessForm", "tokenInput", "tokenVisibilityButton", "connectButton", "searchInput", "addButton", "emptyAddButton", "themeButton", "themePanel", "themeGrid", "closeThemePanel", "systemThemeButton", "languageSelect", "languageSelectToolbar", "totalCount", "visibleCount", "syncTime",
   "editor", "editorMode", "editorTitle", "closeEditor", "entryForm", "currentLabel", "labelInput", "issuerInput", "accountInput", "secretInput", "digitsInput",
   "periodInput", "algorithmInput", "qrInput", "scanButton", "refreshButton", "statePanel", "stateTitle", "stateMessage", "otpGrid", "otpTemplate", "deleteDialog",
   "deleteDescription", "confirmDelete", "toast"
 ].map((id) => [id, document.getElementById(id)]));
 
+const themes = [
+  ["silent-obsidian", "Silent Obsidian", "Dark · Executive", "executive"], ["cyber-teal", "Cyber Teal", "Dark · Operations", "topnav"],
+  ["midnight-indigo", "Midnight Indigo", "Dark · Workstation", "focused"], ["graphite-gold", "Graphite Gold", "Dark · Briefing", "briefing"],
+  ["arctic-frost", "Arctic Frost", "Light · Corporate", "office"], ["paper-terminal", "Paper Terminal", "Light · Ledger", "ledger"],
+  ["matrix-terminal", "Matrix Terminal", "Dark · Console", "console"], ["crimson-security", "Crimson Security", "Dark · Security", "security"],
+  ["aurora-glass", "Aurora Glass", "Dark · Studio", "layered"], ["monochrome-zero", "Monochrome Zero", "Dark · Minimal", "editorial"]
+].map(([id, name, category, layout]) => ({ id, name, category, layout }));
+const themeIds = new Set(themes.map(({ id }) => id));
 let language = localStorage.getItem("sat-language") === "en" ? "en" : "id";
-let theme = localStorage.getItem("sat-theme") === "light" ? "light" : "dark";
+let theme = storedTheme();
 let accessToken = "";
 let entries = [];
 let activeCodes = new Map();
@@ -54,14 +62,87 @@ function text(key, replacements = {}) {
   return value;
 }
 
+function storedTheme() {
+  const requested = new URLSearchParams(window.location.search).get("theme");
+  if (requested && themeIds.has(requested)) return requested;
+  const saved = localStorage.getItem("sat.theme");
+  if (saved === "system" || themeIds.has(saved)) return saved;
+  const legacy = localStorage.getItem("sat-theme");
+  if (legacy === "light" || legacy === "dark") {
+    const migrated = legacy === "light" ? "arctic-frost" : "silent-obsidian";
+    localStorage.setItem("sat.theme", migrated);
+    localStorage.removeItem("sat-theme");
+    return migrated;
+  }
+  return "system";
+}
+
+function resolvedTheme() { return theme === "system" ? (window.matchMedia("(prefers-color-scheme: light)").matches ? "arctic-frost" : "silent-obsidian") : theme; }
+function activeAppearance() { return themes.find((item) => item.id === resolvedTheme()) || themes[0]; }
+
+function renderThemePicker() {
+  elements.themeGrid.replaceChildren();
+  themes.forEach((item) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "theme-card";
+    button.dataset.themePreview = item.id;
+    button.dataset.themeChoice = item.id;
+    button.setAttribute("role", "radio");
+    button.setAttribute("aria-checked", String(theme === item.id));
+    button.setAttribute("aria-label", `${item.name}, ${item.category}`);
+    const preview = document.createElement("span"); preview.className = "theme-card__preview";
+    const previewNav = document.createElement("i"); previewNav.className = "theme-card__preview-nav"; previewNav.textContent = "SAT     ●";
+    const previewTitle = document.createElement("em"); previewTitle.className = "theme-card__preview-title"; previewTitle.textContent = "Silent / Authenticator";
+    const previewVault = document.createElement("span"); previewVault.className = "theme-card__preview-vault";
+    const previewStatus = document.createElement("small"); previewStatus.textContent = "• VAULT";
+    const previewCode = document.createElement("b"); previewCode.textContent = "123 456";
+    previewVault.append(previewStatus, previewCode);
+    preview.append(previewNav, previewTitle, previewVault);
+    const name = document.createElement("strong"); name.textContent = item.name;
+    const category = document.createElement("small"); category.textContent = item.category;
+    button.append(preview, name, category);
+    button.addEventListener("click", () => setTheme(item.id));
+    elements.themeGrid.append(button);
+  });
+  elements.systemThemeButton.setAttribute("aria-checked", String(theme === "system"));
+}
+
+function setTheme(nextTheme) {
+  document.documentElement.dataset.themeChanging = "true";
+  theme = nextTheme;
+  localStorage.setItem("sat.theme", theme);
+  document.documentElement.dataset.theme = resolvedTheme();
+  document.documentElement.dataset.layout = activeAppearance().layout;
+  document.documentElement.dataset.themePreference = theme;
+  renderThemePicker();
+  window.setTimeout(() => { delete document.documentElement.dataset.themeChanging; }, 360);
+}
+
+function openThemePanel(trigger) {
+  elements.themePanel.hidden = false;
+  elements.themePanel.dataset.invoker = trigger.id;
+  elements.themeButton.setAttribute("aria-expanded", "true");
+  window.requestAnimationFrame(() => elements.closeThemePanel.focus());
+}
+
+function closeThemePanel() {
+  const invoker = document.getElementById(elements.themePanel.dataset.invoker || "themeButton");
+  elements.themePanel.hidden = true;
+  elements.themeButton.setAttribute("aria-expanded", "false");
+  invoker?.focus();
+}
+
 function applyPreferences() {
   document.documentElement.lang = language;
-  document.documentElement.dataset.theme = theme;
+  document.documentElement.dataset.theme = resolvedTheme();
+  document.documentElement.dataset.layout = activeAppearance().layout;
+  document.documentElement.dataset.themePreference = theme;
   elements.languageSelect.value = language;
-  elements.themeButton.setAttribute("aria-pressed", String(theme === "light"));
+  elements.languageSelectToolbar.value = language;
   document.querySelectorAll("[data-i18n]").forEach((node) => { node.textContent = text(node.dataset.i18n); });
   document.querySelectorAll("[data-i18n-aria]").forEach((node) => { node.setAttribute("aria-label", text(node.dataset.i18nAria)); });
-  elements.themeButton.textContent = text(theme === "dark" ? "theme" : "themeDark");
+  renderThemePicker();
   renderEntries();
 }
 
@@ -77,6 +158,7 @@ function setState(state, title, message) {
   elements.stateTitle.textContent = title;
   elements.stateMessage.textContent = message;
   elements.statePanel.hidden = false;
+  elements.emptyAddButton.hidden = state !== "empty";
 }
 
 async function api(path, options = {}) {
@@ -234,6 +316,7 @@ async function loadEntries() {
     return;
   }
   elements.accessGate.hidden = true;
+  document.body.dataset.vaultState = "connected";
   entries = result.data.entries || [];
   elements.syncTime.dateTime = new Date().toISOString();
   elements.syncTime.textContent = new Date().toLocaleTimeString(language);
@@ -264,15 +347,21 @@ async function submitEntry(event) {
 async function scanQr() {
   const file = elements.qrInput.files[0];
   if (!file || file.size > 1000000) {
-    showToast(file ? "QR > 1 MB" : text("qr"));
+    showToast(file ? text("qrTooLarge") : text("qrChooseFile"));
     return;
   }
-  const encoded = await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result).split(",").pop());
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+  let encoded;
+  try {
+    encoded = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(",").pop());
+      reader.onerror = () => reject(new Error("file_read_failed"));
+      reader.readAsDataURL(file);
+    });
+  } catch (error) {
+    showToast(text("error"));
+    return;
+  }
   const result = await api("/api/scan-qr", { method: "POST", body: JSON.stringify({ image: encoded }) });
   if (!result.ok) {
     showToast(result.data.message || text("error"));
@@ -288,15 +377,34 @@ async function scanQr() {
   showToast(text("qrReady"));
 }
 
-elements.accessForm.addEventListener("submit", (event) => { event.preventDefault(); accessToken = elements.tokenInput.value; elements.tokenInput.value = ""; loadEntries(); });
+elements.accessForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  accessToken = elements.tokenInput.value;
+  elements.tokenInput.value = "";
+  elements.connectButton.disabled = true;
+  loadEntries().finally(() => { elements.connectButton.disabled = false; });
+});
 elements.searchInput.addEventListener("input", renderEntries);
 elements.addButton.addEventListener("click", () => openEditor());
+elements.emptyAddButton.addEventListener("click", () => openEditor());
 elements.closeEditor.addEventListener("click", () => { elements.editor.hidden = true; elements.addButton.focus(); });
 elements.entryForm.addEventListener("submit", submitEntry);
 elements.scanButton.addEventListener("click", scanQr);
 elements.refreshButton.addEventListener("click", loadEntries);
-elements.themeButton.addEventListener("click", () => { theme = theme === "dark" ? "light" : "dark"; localStorage.setItem("sat-theme", theme); applyPreferences(); });
-elements.languageSelect.addEventListener("change", () => { language = elements.languageSelect.value; localStorage.setItem("sat-language", language); applyPreferences(); });
+elements.themeButton.addEventListener("click", () => openThemePanel(elements.themeButton));
+elements.closeThemePanel.addEventListener("click", closeThemePanel);
+elements.systemThemeButton.addEventListener("click", () => setTheme("system"));
+elements.themePanel.addEventListener("keydown", (event) => { if (event.key === "Escape") closeThemePanel(); });
+document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !elements.themePanel.hidden) closeThemePanel(); });
+elements.tokenVisibilityButton.addEventListener("click", () => {
+  const visible = elements.tokenInput.type === "text";
+  elements.tokenInput.type = visible ? "password" : "text";
+  elements.tokenVisibilityButton.setAttribute("aria-pressed", String(!visible));
+  elements.tokenVisibilityButton.textContent = text(visible ? "showToken" : "hideToken");
+});
+function changeLanguage(value) { language = value; localStorage.setItem("sat-language", language); applyPreferences(); }
+elements.languageSelect.addEventListener("change", () => changeLanguage(elements.languageSelect.value));
+elements.languageSelectToolbar.addEventListener("change", () => changeLanguage(elements.languageSelectToolbar.value));
 elements.deleteDialog.addEventListener("close", async () => {
   if (elements.deleteDialog.returnValue !== "confirm" || !pendingDelete) { pendingDelete = ""; return; }
   const result = await api("/api/delete", { method: "POST", body: JSON.stringify({ label: pendingDelete }) });
@@ -317,6 +425,8 @@ window.setInterval(() => {
   });
 }, 1000);
 
+window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => { if (theme === "system") setTheme("system"); });
 window.addEventListener("offline", () => setState("error", text("offline"), text("offlineHelp")));
 applyPreferences();
+window.requestAnimationFrame(() => document.documentElement.dataset.themeReady = "true");
 loadEntries();
