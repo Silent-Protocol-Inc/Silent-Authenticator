@@ -3,6 +3,7 @@
 set -euo pipefail
 
 SAT_PROJECT_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
+SAT_EXPECTED_VERSION="$(<"$SAT_PROJECT_ROOT/VERSION")"
 SAT_TEST_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/sat-test.XXXXXX")"
 SAT_TEST_HOME="$SAT_TEST_ROOT/home"
 SAT_TEST_TMP="$SAT_TEST_ROOT/tmp"
@@ -83,7 +84,7 @@ parallel_count="$(SAT_HOME="$concurrent_home" SAT_MASTER_PASS_FD=3 "$SAT_PROJECT
 [[ "$parallel_count" -eq 10 ]] || fail_test "concurrent writes returned $parallel_count entries"
 
 sat init --json | jq -e '.status == "created"' >/dev/null
-[[ "$(sat version)" == 'SAT - Silent Authenticator Tool 2.1.0' ]] || fail_test 'CLI version must match the 2.1.0 release'
+[[ "$(sat version)" == "SAT - Silent Authenticator Tool $SAT_EXPECTED_VERSION" ]] || fail_test 'CLI version must match VERSION'
 json_add '{"label":"github-main","issuer":"GitHub","account":"tester@example.invalid","secret":"JBSWY3DPEHPK3PXP","digits":6,"period":30,"algo":"SHA1"}' | jq -e '.status == "created"' >/dev/null
 
 set +e
@@ -232,16 +233,67 @@ curl -fsS -H "X-SAT-Token: $test_token" "http://127.0.0.1:$public_port/api/list"
 SAT_HOME="$SAT_TEST_HOME" "$SAT_PROJECT_ROOT/sat.sh" web-stop >/dev/null
 
 domain_port="$((test_port + 5))"
-SAT_HOME="$SAT_TEST_HOME" SAT_MASTER_PASS_FD=3 SAT_WEB_TOKEN_FD=4 \
-	"$SAT_PROJECT_ROOT/sat.sh" web-domain sat.example.com --cloudflare dns-only --port "$domain_port" \
-	3<<<"$SAT_TEST_PASS" 4<<<"$test_token" >"$SAT_TEST_ROOT/web-domain.log"
-SAT_HOME="$SAT_TEST_HOME" "$SAT_PROJECT_ROOT/sat.sh" web-status | grep -Fq "http://sat.example.com:$domain_port"
-SAT_HOME="$SAT_TEST_HOME" "$SAT_PROJECT_ROOT/sat.sh" web-status | grep -Fq 'Mode: domain Cloudflare: dns-only'
-mapfile -t domain_state <"$SAT_TEST_HOME/sat-web.state"
-[[ "${domain_state[0]}" == '0.0.0.0' && "${domain_state[2]}" == 'sat.example.com' ]] || fail_test 'domain mode state must bind globally and retain the hostname'
-[[ "${domain_state[3]}" == 'domain' && "${domain_state[4]}" == 'dns-only' ]] || fail_test 'domain mode state must retain deployment metadata'
-curl -fsS -H "Host: sat.example.com:$domain_port" "http://127.0.0.1:$domain_port/health" >/dev/null
-SAT_HOME="$SAT_TEST_HOME" "$SAT_PROJECT_ROOT/sat.sh" web-stop >/dev/null
+domain_parse="$(SAT_ROOT="$SAT_PROJECT_ROOT" SAT_HOME="$SAT_TEST_HOME" SAT_WEB_TOKEN_FD=4 bash -c '
+	source "$SAT_ROOT/lib/common.sh"
+	source "$SAT_ROOT/lib/commands.sh"
+	parse_web_options --domain sat.example.com --cloudflare dns-only --port "'$domain_port'"
+	printf "%s|%s|%s|%s" "$WEB_HOST" "$WEB_PORT" "$WEB_DEPLOYMENT" "$WEB_CLOUDFLARE"
+' 4<<<"$test_token")"
+[[ "$domain_parse" == "127.0.0.1|$domain_port|domain|dns-only" ]] || fail_test 'HTTPS domain mode must bind SAT to localhost with the chosen origin port'
+domain_vhost="$(SAT_ROOT="$SAT_PROJECT_ROOT" SAT_HOME="$SAT_TEST_HOME" bash -c '
+	source "$SAT_ROOT/lib/common.sh"
+	source "$SAT_ROOT/lib/commands.sh"
+	web_domain_render_vhost sat.example.com "'$domain_port'" yes
+')"
+grep -Fq "proxy_pass http://127.0.0.1:$domain_port;" <<<"$domain_vhost" || fail_test 'HTTPS domain vhost must proxy to the localhost origin port'
+grep -Fq 'ssl_certificate /etc/letsencrypt/live/sat.example.com/fullchain.pem;' <<<"$domain_vhost" || fail_test 'HTTPS domain vhost must use the Certbot certificate'
+grep -Fq 'sat-cloudflare-realip.conf' <<<"$domain_vhost" || fail_test 'proxied HTTPS domain vhost must restore the Cloudflare client IP'
+
+domain_vhost_servers="$(printf '%s\n' "$domain_vhost" | grep -c 'server_name ')"
+[[ "$domain_vhost_servers" -eq 2 ]] || fail_test "vhost must declare exactly two server blocks, got $domain_vhost_servers"
+[[ "$(printf '%s\n' "$domain_vhost" | grep -o 'server_name [^;]*;' | sort -u)" == 'server_name sat.example.com;' ]] || fail_test 'vhost must declare exactly one hostname'
+! grep -Fq 'spm' <<<"$domain_vhost" || fail_test 'vhost must not include a hostname from another website'
+grep -Fq '# SAT owner:' <<<"$domain_vhost" || fail_test 'vhost must carry the SAT owner marker'
+! grep -Eq 'listen .*default_server|server_name[[:space:]]+_|server_name[[:space:]]+\*\.|server_name[[:space:]]+\.' <<<"$domain_vhost" || fail_test 'SAT domain vhost must not become a wildcard or default server'
+
+replacement_vhost="$(SAT_ROOT="$SAT_PROJECT_ROOT" SAT_HOME="$SAT_TEST_HOME" bash -c '
+	source "$SAT_ROOT/lib/common.sh"
+	source "$SAT_ROOT/lib/commands.sh"
+	web_domain_render_vhost replacement.example.com "'$domain_port'" no
+')"
+grep -Fq 'server_name replacement.example.com;' <<<"$replacement_vhost" || fail_test 'replacement hostname must be rendered exactly'
+! grep -Fq 'sat.example.com' <<<"$replacement_vhost" || fail_test 'previous hostname must never become an implicit SAT alias'
+
+owner_a="$(SAT_ROOT="$SAT_PROJECT_ROOT" SAT_HOME="$SAT_TEST_HOME/owner-a" bash -c '
+	source "$SAT_ROOT/lib/common.sh"
+	source "$SAT_ROOT/lib/commands.sh"
+	web_domain_owner_id
+')"
+owner_b="$(SAT_ROOT="$SAT_PROJECT_ROOT" SAT_HOME="$SAT_TEST_HOME/owner-b" bash -c '
+	source "$SAT_ROOT/lib/common.sh"
+	source "$SAT_ROOT/lib/commands.sh"
+	web_domain_owner_id
+')"
+[[ -n "$owner_a" && "$owner_a" != "$owner_b" ]] || fail_test 'distinct SAT homes must produce distinct domain owners'
+
+owner_guard="$(SAT_ROOT="$SAT_PROJECT_ROOT" SAT_HOME="$SAT_TEST_HOME/owner-a" bash -c '
+	source "$SAT_ROOT/lib/common.sh"
+	source "$SAT_ROOT/lib/commands.sh"
+	vhost="$(web_domain_render_vhost sat.example.com "'$domain_port'" yes)"
+	vhost_owner="$(web_domain_owner_id_from_vhost "$vhost")"
+	web_domain_vhost_owner_ok "$vhost" "$vhost_owner" && echo same-owner=ok || echo same-owner=conflict
+	web_domain_vhost_owner_ok "$vhost" "'"$owner_b"'" && echo foreign-owner=ok || echo foreign-owner=conflict
+')"
+grep -Fq 'same-owner=ok' <<<"$owner_guard" || fail_test 'rebinding a hostname owned by the same SAT instance must stay idempotent'
+grep -Fq 'foreign-owner=conflict' <<<"$owner_guard" || fail_test "a hostname owned by another SAT instance must not be reused"
+
+normalized_domain="$(SAT_ROOT="$SAT_PROJECT_ROOT" SAT_HOME="$SAT_TEST_HOME" SAT_WEB_TOKEN_FD=4 bash -c '
+	source "$SAT_ROOT/lib/common.sh"
+	source "$SAT_ROOT/lib/commands.sh"
+	parse_web_options --domain SAT.EXAMPLE.COM --cloudflare dns-only --port "'$domain_port'"
+	printf "%s" "$WEB_DOMAIN"
+' 4<<<"$test_token")"
+[[ "$normalized_domain" == 'sat.example.com' ]] || fail_test 'domain input must be normalized to lowercase'
 
 set +e
 invalid_domain_error="$(SAT_HOME="$SAT_TEST_HOME" SAT_OUTPUT=json SAT_MASTER_PASS_FD=3 SAT_WEB_TOKEN_FD=4 \
@@ -252,25 +304,40 @@ SAT_HOME="$SAT_TEST_HOME" SAT_MASTER_PASS_FD=3 SAT_WEB_TOKEN_FD=4 \
 	"$SAT_PROJECT_ROOT/sat.sh" web-domain sat.example.com --cloudflare maybe --port "$domain_port" \
 	3<<<"$SAT_TEST_PASS" 4<<<"$test_token" >/dev/null 2>&1
 invalid_cloudflare_status=$?
-SAT_HOME="$SAT_TEST_HOME" SAT_MASTER_PASS_FD=3 SAT_WEB_TOKEN_FD=4 \
-	"$SAT_PROJECT_ROOT/sat.sh" web-domain sat.example.com --cloudflare proxied --port 8787 \
-	3<<<"$SAT_TEST_PASS" 4<<<"$test_token" >/dev/null 2>&1
-invalid_cloudflare_port_status=$?
+invalid_cloudflare_dns_error="$(SAT_HOME="$SAT_TEST_HOME" SAT_OUTPUT=json SAT_MASTER_PASS_FD=3 SAT_WEB_TOKEN_FD=4 \
+	"$SAT_PROJECT_ROOT/sat.sh" web-domain sat.example.com --cloudflare off --port "$domain_port" \
+	3<<<"$SAT_TEST_PASS" 4<<<"$test_token" 2>&1)"
+invalid_cloudflare_dns_status=$?
 set -e
 [[ "$invalid_domain_status" -eq 6 ]] || fail_test 'invalid domain must exit 6'
 jq -e '.error == "invalid_domain"' <<<"$invalid_domain_error" >/dev/null || fail_test 'invalid domain must return its stable machine code'
 [[ "$invalid_cloudflare_status" -eq 6 ]] || fail_test 'invalid Cloudflare mode must exit 6'
-[[ "$invalid_cloudflare_port_status" -eq 6 ]] || fail_test 'unsupported Cloudflare proxy port must exit 6'
+[[ "$invalid_cloudflare_dns_status" -eq 6 ]] || fail_test 'HTTPS domain must require Cloudflare DNS for TXT validation'
+jq -e '.error == "cloudflare_dns_required"' <<<"$invalid_cloudflare_dns_error" >/dev/null || fail_test 'HTTPS domain must return the Cloudflare DNS machine code'
 
 menu_output="$(printf '5\n0\n0\n' | SAT_HOME="$SAT_TEST_HOME" "$SAT_PROJECT_ROOT/sat.sh" menu)"
 grep -Fq 'Silent Authenticator Tool (SAT)' <<<"$menu_output" || fail_test 'interactive menu must render the SAT ASCII banner'
-grep -Fq 'v2.1.0  © 2026 SilentProtocol. Licensed under Apache-2.0.' <<<"$menu_output" || fail_test 'interactive menu must render the release version, copyright year, and open-source license'
+grep -Fq "v$SAT_EXPECTED_VERSION  © 2026 SilentProtocol. Licensed under Apache-2.0." <<<"$menu_output" || fail_test 'interactive menu must render the release version, copyright year, and open-source license'
 grep -Fq $'1) Daftar entri OTP\n2) Tambah OTP\n3) Hasilkan kode OTP' <<<"$menu_output" || fail_test 'interactive CLI menu must render vertically in Indonesian'
 grep -Fq 'Global VPS / IP' <<<"$menu_output" || fail_test 'website submenu must include global VPS/IP mode'
 grep -Fq 'Domain / subdomain' <<<"$menu_output" || fail_test 'website submenu must include domain mode'
 
+set +e
+indonesian_domain_menu_output="$(printf '5\n2\nsat.example.com\ninvalid\nn\n' | SAT_HOME="$SAT_TEST_HOME" "$SAT_PROJECT_ROOT/sat.sh" menu 2>&1)"
+indonesian_domain_menu_status=$?
+set -e
+[[ "$indonesian_domain_menu_status" -eq 6 ]] || fail_test 'Indonesian domain menu must validate the prompted port'
+grep -Fq 'Domain/subdomain HTTPS: Port (1024-65535): Apakah DNS menggunakan Cloudflare? [Y/n]:' <<<"$indonesian_domain_menu_output" || fail_test 'Indonesian domain menu must prompt for port before DNS mode'
+
 english_menu_output="$(printf '0\n' | SAT_HOME="$SAT_TEST_HOME" SAT_LANG=en "$SAT_PROJECT_ROOT/sat.sh" menu)"
 grep -Fq $'1) List OTP entries\n2) Add OTP entry\n3) Generate OTP code' <<<"$english_menu_output" || fail_test 'interactive CLI menu must render vertically in English'
+
+set +e
+english_domain_menu_output="$(printf '5\n2\nsat.example.com\ninvalid\nn\n' | SAT_HOME="$SAT_TEST_HOME" SAT_LANG=en "$SAT_PROJECT_ROOT/sat.sh" menu 2>&1)"
+english_domain_menu_status=$?
+set -e
+[[ "$english_domain_menu_status" -eq 6 ]] || fail_test 'English domain menu must validate the prompted port'
+grep -Fq 'Domain/subdomain HTTPS: Port (1024-65535): Is DNS managed by Cloudflare? [Y/n]:' <<<"$english_domain_menu_output" || fail_test 'English domain menu must prompt for port before DNS mode'
 
 oversized_secret="$(python3 -c 'print("A" * 1025)')"
 set +e

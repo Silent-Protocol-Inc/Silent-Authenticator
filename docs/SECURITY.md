@@ -1,12 +1,20 @@
 # Security Model
 
+## Supported Versions
+
+Security fixes are applied to the current 2.1.x release line. Check [CHANGELOG.md](../CHANGELOG.md) before reporting an issue to confirm the installed version.
+
+## Reporting a Vulnerability
+
+Do not disclose exploitable vulnerabilities, vault material, passwords, tokens, private keys, or recovery data in public issues. Use GitHub's private security-advisory reporting for the repository when available, or contact the repository owner through an existing private channel. Include reproducible, sanitized steps and the affected SAT version.
+
 SAT protects OTP secrets at rest with the existing OpenSSL AES-256-CBC PBKDF2 vault format. The decrypted document exists only in a mode-0600 temporary file and is removed on process exit. Mutations take an exclusive lock and replace the encrypted vault atomically.
 
 Master passwords, OTP secrets, and web tokens are read from hidden prompts, standard input, or inherited file descriptors. They are not supported as ordinary command arguments. The web server passes the master password to short-lived CLI processes through a pipe descriptor, not argv or environment values.
 
 The web surface defaults to localhost. Network binding requires a token, and SAT sends a default-deny CSP, no-store caching, same-origin resource policy, origin checks for writes, request limits, and per-client rate limiting. The browser keeps the access token in memory only. Vault data is inserted with DOM text APIs.
 
-Domain deployment keeps the same network-token boundary. Cloudflare modes are operator metadata used to validate the selected HTTP port and print DNS pointing guidance; SAT does not modify DNS, firewall, TLS, or Cloudflare settings. A proxied DNS record is not a substitute for authenticated TLS between Cloudflare and the origin.
+Domain deployment keeps the same network-token boundary while binding SAT only to loopback. nginx terminates public HTTPS and proxies to SAT; Certbot's `dns-cloudflare` plugin creates and validates ACME TXT records. Each generated SAT vhost has one exact `server_name`, never a wildcard or `default_server`. Setup refuses an origin port already referenced by another enabled Nginx proxy, and the SAT HTTP transport also rejects a mismatched `Host` header. This prevents another hostname sharing the same IP, Cloudflare zone, or certificate infrastructure from becoming an alias for SAT. The Cloudflare API token is stored mode `0600` at `$SAT_HOME/cloudflare.ini` so Certbot renewal can reuse it. Scope that token to the intended zone with only `Zone > Zone > Read` and `Zone > DNS > Edit`. A proxied record means Cloudflare terminates TLS at its edge and can observe Web UI content; use DNS-only mode when Cloudflare is outside the trust boundary.
 
 ## Operator Responsibilities
 

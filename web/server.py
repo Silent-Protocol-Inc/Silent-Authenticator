@@ -26,6 +26,7 @@ from typing import Any
 MAX_BODY_BYTES = 1_500_000
 MAX_IMAGE_BYTES = 1_000_000
 REQUESTS_PER_MINUTE = 120
+MAX_RATE_LIMIT_CLIENTS = 2_048
 STATIC_TYPES = {".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8"}
 
 
@@ -34,17 +35,44 @@ def read_fd(fd: int) -> str:
 		return stream.readline().rstrip("\r\n")
 
 
+def host_matches_allowed(host_header: str, allowed_host: str) -> bool:
+	"""Match one configured DNS hostname, optionally followed by a numeric port."""
+	if not allowed_host:
+		return True
+	host = host_header.lower().rstrip(".")
+	allowed = allowed_host.lower().rstrip(".")
+	if hmac.compare_digest(host, allowed):
+		return True
+	name, separator, port = host.rpartition(":")
+	return bool(separator and port.isdigit() and hmac.compare_digest(name, allowed))
+
+
 class RateLimiter:
-	def __init__(self, limit: int, window_seconds: int = 60) -> None:
+	"""Keep request history bounded even when a public server sees many client IPs."""
+
+	def __init__(self, limit: int, window_seconds: int = 60, max_clients: int = MAX_RATE_LIMIT_CLIENTS) -> None:
 		self.limit = limit
 		self.window_seconds = window_seconds
+		self.max_clients = max_clients
 		self.requests: dict[str, collections.deque[float]] = {}
 		self.lock = threading.Lock()
+
+	def prune_expired_clients(self, now: float) -> None:
+		for client, bucket in tuple(self.requests.items()):
+			if not bucket or now - bucket[-1] >= self.window_seconds:
+				del self.requests[client]
 
 	def allow(self, client: str) -> bool:
 		now = time.monotonic()
 		with self.lock:
-			bucket = self.requests.setdefault(client, collections.deque())
+			bucket = self.requests.get(client)
+			if bucket is None:
+				if len(self.requests) >= self.max_clients:
+					self.prune_expired_clients(now)
+				if len(self.requests) >= self.max_clients:
+					return False
+				bucket = collections.deque()
+				self.requests[client] = bucket
 			while bucket and now - bucket[0] >= self.window_seconds:
 				bucket.popleft()
 			if len(bucket) >= self.limit:
@@ -54,13 +82,14 @@ class RateLimiter:
 
 
 class SatApplication:
-	def __init__(self, script: Path, sat_home: Path, static_root: Path, password: str, token: str, version: str) -> None:
+	def __init__(self, script: Path, sat_home: Path, static_root: Path, password: str, token: str, version: str, allowed_host: str) -> None:
 		self.script = script.resolve()
 		self.sat_home = sat_home.resolve()
 		self.static_root = static_root.resolve()
 		self.password = password
 		self.token = token
 		self.version = version
+		self.allowed_host = allowed_host.lower().rstrip(".")
 		self.rate_limiter = RateLimiter(REQUESTS_PER_MINUTE)
 
 	@property
@@ -185,7 +214,7 @@ class SatHandler(BaseHTTPRequestHandler):
 		print(json.dumps({"time": time.time(), "client": self.client_address[0], "method": self.command, "status": args[1]}), flush=True)
 
 	def end_headers(self) -> None:
-		self.send_header("Content-Security-Policy", "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
+		self.send_header("Content-Security-Policy", "default-src 'none'; script-src 'self' 'sha256-OP4N4QEwybz1EK/uY4lNwOLwZMc7V6E+EHdAYuEjFXA='; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
 		self.send_header("Referrer-Policy", "no-referrer")
 		self.send_header("X-Content-Type-Options", "nosniff")
 		self.send_header("X-Frame-Options", "DENY")
@@ -238,6 +267,12 @@ class SatHandler(BaseHTTPRequestHandler):
 		parsed = urllib.parse.urlsplit(origin)
 		return parsed.scheme in {"http", "https"} and parsed.netloc == self.headers.get("Host", "")
 
+	def allowed_host(self) -> bool:
+		if host_matches_allowed(self.headers.get("Host", ""), self.server.application.allowed_host):
+			return True
+		self.send_json(HTTPStatus.BAD_REQUEST, {"error": "host_rejected", "message": "Hostname ini tidak diizinkan untuk SAT."})
+		return False
+
 	def read_payload(self) -> dict[str, Any] | None:
 		content_type = self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
 		if content_type != "application/json":
@@ -266,6 +301,8 @@ class SatHandler(BaseHTTPRequestHandler):
 		self.send_json(success if exit_code == 0 else status_by_exit.get(exit_code, HTTPStatus.BAD_REQUEST), data)
 
 	def do_GET(self) -> None:
+		if not self.allowed_host():
+			return
 		parsed = urllib.parse.urlsplit(self.path)
 		if parsed.path == "/":
 			self.send_static(self.server.application.static_root / "index.html", "text/html; charset=utf-8")
@@ -298,6 +335,8 @@ class SatHandler(BaseHTTPRequestHandler):
 			self.send_json(HTTPStatus.NOT_FOUND, {"error": "not_found", "message": "Endpoint tidak ditemukan."})
 
 	def do_HEAD(self) -> None:
+		if not self.allowed_host():
+			return
 		parsed = urllib.parse.urlsplit(self.path)
 		if parsed.path == "/":
 			self.send_static(self.server.application.static_root / "index.html", "text/html; charset=utf-8", head_only=True)
@@ -311,6 +350,8 @@ class SatHandler(BaseHTTPRequestHandler):
 		self.end_headers()
 
 	def do_POST(self) -> None:
+		if not self.allowed_host():
+			return
 		parsed = urllib.parse.urlsplit(self.path)
 		if not parsed.path.startswith("/api/"):
 			self.send_json(HTTPStatus.NOT_FOUND, {"error": "not_found", "message": "Endpoint tidak ditemukan."})
@@ -349,6 +390,8 @@ class SatHandler(BaseHTTPRequestHandler):
 			self.send_json(HTTPStatus.NOT_FOUND, {"error": "not_found", "message": "Endpoint tidak ditemukan."})
 
 	def do_OPTIONS(self) -> None:
+		if not self.allowed_host():
+			return
 		self.send_json(HTTPStatus.METHOD_NOT_ALLOWED, {"error": "method_not_allowed", "message": "CORS tidak diaktifkan."})
 
 
@@ -359,6 +402,7 @@ def parse_arguments() -> argparse.Namespace:
 	parser.add_argument("--script", type=Path, required=True)
 	parser.add_argument("--sat-home", type=Path, required=True)
 	parser.add_argument("--version", required=True)
+	parser.add_argument("--allowed-host", default="")
 	parser.add_argument("--password-fd", type=int, required=True)
 	parser.add_argument("--token-fd", type=int, required=True)
 	return parser.parse_args()
@@ -371,7 +415,7 @@ def main() -> None:
 	if not password:
 		raise SystemExit("Master password is required")
 	static_root = Path(__file__).resolve().parent / "static"
-	application = SatApplication(args.script, args.sat_home, static_root, password, token, args.version)
+	application = SatApplication(args.script, args.sat_home, static_root, password, token, args.version, args.allowed_host)
 	server = SatServer((args.host, args.port), application)
 	print(json.dumps({"event": "ready", "host": args.host, "port": args.port, "token_required": bool(token)}), flush=True)
 	try:
