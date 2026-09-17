@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 APP_NAME='SAT - Silent Authenticator Tool'
-APP_VERSION='2.1.0'
+APP_VERSION="$(tr -d '\r\n' <"$SAT_ROOT/VERSION")"
+[[ "$APP_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { printf 'Invalid SAT version in %s/VERSION\n' "$SAT_ROOT" >&2; exit 70; }
 SAT_LANG="${SAT_LANG:-id}"
 SAT_OUTPUT="${SAT_OUTPUT:-text}"
 SAT_HOME="${SAT_HOME:-${HOME}/.sat}"
@@ -10,6 +11,7 @@ SAT_LOCK_FILE="${SAT_LOCK_FILE:-${SAT_VAULT_FILE}.lock}"
 SAT_WEB_PID_FILE="${SAT_WEB_PID_FILE:-$SAT_HOME/sat-web.pid}"
 SAT_WEB_LOG_FILE="${SAT_WEB_LOG_FILE:-$SAT_HOME/sat-web.log}"
 SAT_WEB_STATE_FILE="${SAT_WEB_STATE_FILE:-$SAT_HOME/sat-web.state}"
+SAT_WEB_CLOUDFLARE_CREDENTIALS="${SAT_WEB_CLOUDFLARE_CREDENTIALS:-$SAT_HOME/cloudflare.ini}"
 SAT_MASTER_PASS_VALUE=''
 SAT_EXTERNAL_TEMP_FILES=()
 

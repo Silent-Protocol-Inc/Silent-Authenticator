@@ -1,0 +1,35 @@
+name: Verify SAT
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install system checks
+        run: sudo apt-get update && sudo apt-get install -y shellcheck jq
+      - name: Verify
+        run: |
+          bash -n sat.sh lib/*.sh
+          shellcheck -x sat.sh
+          python3 -m py_compile lib/totp.py web/server.py
+          node --check web/static/app.js
+          python3 tests/test_totp.py
+          python3 tests/test_server.py
+          python3 tests/verify_design.py
+          ./tests/integration.sh
+          ./tests/load_400.sh

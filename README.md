@@ -5,7 +5,14 @@
 [![GitHub top language](https://img.shields.io/github/languages/top/Silent-Protocol-Inc/Silent-Authenticator?style=flat-square)](https://github.com/Silent-Protocol-Inc/Silent-Authenticator)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=flat-square)](LICENSE)
 
-SAT is a local-first TOTP manager with an encrypted OpenSSL vault, a Bash CLI, and an optional Python web interface. Version 2.1.0 keeps the legacy `otp.vault` encryption format while separating vault policy, CLI commands, HTTP transport, and browser assets.
+SAT is a local-first TOTP manager with an encrypted OpenSSL vault, a Bash CLI, and an optional Python web interface. Version 1.2.0 keeps the legacy `otp.vault` encryption format while separating vault policy, CLI commands, HTTP transport, and browser assets.
+
+## Project Structure
+
+- `sat.sh` is the command entry point; `lib/` contains the CLI, vault policy, and TOTP helper.
+- `web/` contains the local HTTP transport and browser assets.
+- `tests/` contains disposable unit, integration, load, and browser-contract checks.
+- `docs/` and `decisions/` record operating, security, design, and architecture contracts.
 
 ## Requirements
 
@@ -50,26 +57,29 @@ SAT_HOME=/tmp/sat-dev ./sat.sh init
 
 For the previous direct-from-VPS workflow, run `sat web-public`. It asks for the master password and a separate Web UI token, binds to the network, and prints the detected VPS URL. Enter that token in the browser access gate. The token stays out of argv, URLs, logs, environment values, and browser storage.
 
-Untuk domain atau subdomain, pilih `Website` lalu `Domain / subdomain` dari menu, atau gunakan CLI berikut:
+Untuk domain atau subdomain, pilih `Website` lalu `Domain / subdomain HTTPS` dari menu. SAT meminta domain, port origin localhost, mode Cloudflare, token API DNS, dan email Certbot. Alternatifnya, gunakan CLI berikut:
 
 ```bash
-./sat.sh web-domain sat.example.com --cloudflare off
 ./sat.sh web-domain sat.example.com --cloudflare dns-only
 ./sat.sh web-domain sat.example.com --cloudflare proxied
 ```
 
-`off` berarti DNS dikelola di luar Cloudflare, `dns-only` berarti Cloudflare tanpa proxy (grey cloud), dan `proxied` berarti orange cloud. Arahkan record A/AAAA hostname tersebut ke IP publik VPS. Mode proxied memakai port HTTP `8080` secara default; SAT juga menerima 8880, 2052, 2082, 2086, dan 2095. Port 80 sengaja tidak dipakai karena SAT mempertahankan rentang port non-privileged 1024–65535. SAT hanya menyimpan metadata deployment lokal dan tidak mengubah DNS provider.
+Mode domain menggunakan Certbot `dns-cloudflare` untuk membuat dan memvalidasi record TXT ACME, lalu membuat vhost nginx HTTPS yang meneruskan trafik ke SAT di `127.0.0.1:<port>`. Tidak ada port SAT yang dibuka langsung ke internet. `dns-only` berarti grey cloud; `proxied` berarti orange cloud dan memerlukan konfirmasi bahwa Cloudflare berada dalam trust boundary. Buat token API Cloudflare yang dibatasi pada zone terkait: `Zone > Zone > Read` dan `Zone > DNS > Edit`. Token disimpan di `$SAT_HOME/cloudflare.ini` dengan mode `0600` agar renewal Certbot tetap dapat berjalan.
+
+Setiap vhost SAT mengikat tepat **satu hostname** (`server_name <hostname>;`), bukan wildcard dan bukan `default_server`, lalu menulis marker `# SAT owner: <id>` yang diturunkan dari `SAT_HOME` (identitas deployment). Server SAT juga memvalidasi header `Host` pada mode domain sebagai defense-in-depth. Binding bersifat idempotent hanya untuk instance SAT yang sama (SAT_HOME yang sama). Jika hostname sudah di-provision oleh instance SAT lain, SAT menolak dengan `domain_owner_conflict` (exit 5) dan **tidak** menimpa binding lama — hostname milik website lain tidak akan pernah ikut ter-bind atau direbut. Normalisasi input: hostname di-lowercase; input yang bukan hostname valid (misalnya `https://…` atau trailing slash) ditolak oleh validasi.
 
 Kontrak error khusus mode domain:
 
 | Machine code | Exit | Arti / tindakan |
 | --- | ---: | --- |
-| `domain_host_conflict` | 2 | Jangan gabungkan `--domain` dengan `--host`; SAT memilih bind jaringan untuk mode domain. |
+| `domain_host_conflict` | 2 | Jangan gabungkan `--domain` dengan `--host`; SAT memilih loopback untuk mode domain. |
 | `invalid_domain` | 6 | Gunakan hostname DNS penuh seperti `sat.example.com`. |
-| `invalid_cloudflare_mode` | 6 | Pilih `off`, `dns-only`, atau `proxied`. |
-| `cloudflare_port_unsupported` | 6 | Pilih salah satu port HTTP Cloudflare yang didukung SAT. |
+| `cloudflare_dns_required` | 6 | Pilih `dns-only` atau `proxied`; validasi TXT SAT memakai Cloudflare DNS. |
+| `web_port_in_use` | 8 | Pilih port origin localhost yang belum dipakai sebelum Certbot dijalankan. |
+| `origin_proxy_conflict` | 5 | Port origin sudah diproksikan oleh vhost lain. Lepaskan vhost tersebut atau gunakan port origin lain; SAT tidak berbagi upstream dengan hostname lain. |
+| `domain_owner_conflict` | 5 | Hostname sudah diikat oleh instance SAT lain; hentikan instance tersebut sebelum mengikat ulang, binding lama tidak ditimpa. |
 
-Localhost can run without a web token. Any non-local bind—including domain mode—requires `SAT_WEB_TOKEN_FD`; the token is kept in process/tab memory and is never accepted in a URL or normal command argument. SAT does not provide TLS. Put a trusted TLS reverse proxy in front of it before any remote use. Cloudflare proxy status alone does not add TLS to the SAT origin.
+Localhost can run without a web token, tetapi mode domain tetap mewajibkan token karena nginx meneruskannya ke Web UI. Token UI berada di memori proses/tab; token Cloudflare hanya dipakai Certbot dan disimpan dalam file mode `0600` untuk renewal. Setel Cloudflare ke `Full (strict)` setelah penerbitan sertifikat. Cloudflare proxy dapat melihat konten Web UI setelah TLS diterminasi di edge; gunakan `dns-only` bila Cloudflare tidak berada dalam trust boundary.
 
 ## Web UI Preview
 
@@ -85,6 +95,7 @@ The screenshots below were captured with Google Chrome against a disposable vaul
 bash -n sat.sh lib/*.sh
 shellcheck -x sat.sh
 python3 -m py_compile lib/totp.py web/server.py
+python3 tests/test_server.py
 ./tests/integration.sh
 ./tests/load_400.sh
 python3 tests/test_totp.py
@@ -92,6 +103,12 @@ python3 tests/verify_design.py
 ```
 
 See [docs/SECURITY.md](docs/SECURITY.md), [docs/DESIGN.md](docs/DESIGN.md), and [docs/MIGRATION_V2.md](docs/MIGRATION_V2.md) for the operating contracts and known limitations.
+
+## Versioning and Releases
+
+SAT follows Semantic Versioning (`MAJOR.MINOR.PATCH`): PATCH releases fix compatible defects, MINOR releases add compatible functionality, and MAJOR releases contain intentional breaking changes. The canonical version is [VERSION](VERSION); release history is maintained in [CHANGELOG.md](CHANGELOG.md).
+
+Before releasing, run the verification commands above, keep `main` clean, create an annotated `vX.Y.Z` tag, then publish the commit and tag. See [CONTRIBUTING.md](CONTRIBUTING.md) for the contributor and release workflow.
 
 ## License
 

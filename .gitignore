@@ -1,9 +1,16 @@
 # Runtime secrets and state
 .sat/
+**/.sat/
 *.vault
 *.gpg
 *.gpg.*
 *.pem
+*.key
+*.p12
+*.pfx
+cloudflare.ini
+credentials.json
+secrets.json
 *.pid
 *.log
 
@@ -12,6 +19,9 @@
 sat_backup_*/
 sat_portable_*/
 spm_portable_*/
+wantod/
+tmp_home_webtest/
+spm_*
 
 # Test and language caches
 __pycache__/
@@ -22,3 +32,7 @@ __pycache__/
 .DS_Store
 .idea/
 .vscode/
+
+# Release and package artifacts
+*.tar
+*.tar.gz
