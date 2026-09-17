@@ -7,7 +7,7 @@
 [![GitHub top language](https://img.shields.io/github/languages/top/Silent-Protocol-Inc/Silent-Authenticator?style=flat-square)](https://github.com/Silent-Protocol-Inc/Silent-Authenticator)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=flat-square)](LICENSE)
 
-SAT is a local-first TOTP manager with an encrypted OpenSSL vault, a Bash CLI, and an optional Python web interface. Version 1.3.1 keeps the legacy `otp.vault` encryption format while separating vault policy, CLI commands, HTTP transport, and browser assets.
+SAT is a local-first TOTP manager with an encrypted OpenSSL vault, a Bash CLI, and an optional Python web interface. Version 1.3.2 keeps the legacy `otp.vault` encryption format while separating vault policy, CLI commands, HTTP transport, and browser assets.
 
 ## Project Structure
 
@@ -85,7 +85,7 @@ Localhost can run without a web token, tetapi mode domain tetap mewajibkan token
 
 ## Terminal language and setup
 
-The interactive `./sat.sh menu` asks first-time terminal users to choose English or Bahasa Indonesia, then stores only that harmless preference in `$SAT_HOME/config` (mode `0600`). Choose **Language/Bahasa** from the main menu to change it. `SAT_LANG=en` or `SAT_LANG=id` remains an explicit, non-interactive override for scripts.
+The interactive `./sat.sh menu` asks users to choose English or Bahasa Indonesia before opening the main menu, then stores only that harmless preference in `$SAT_HOME/config` (mode `0600`). Choose **Language/Bahasa** from the main menu to change it. `SAT_LANG=en` or `SAT_LANG=id` remains an explicit, non-interactive override for scripts.
 
 The HTTPS domain wizard groups Address, DNS, Web UI Security, Cloudflare, and TLS questions. It validates the domain and origin port before continuing, keeps secret input hidden, requires an explicit `yes` for proxied Cloudflare trust, and presents a secret-free configuration summary before Certbot or Nginx changes are applied.
 
