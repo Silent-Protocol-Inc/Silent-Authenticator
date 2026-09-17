@@ -8,32 +8,7 @@ set_json_output_if_requested() {
 }
 
 print_banner() {
-	cat <<'EOF'
-
-          _____                    _____                _____
-         /\    \                  /\    \              /\    \
-        /::\    \                /::\    \            /::\    \
-       /::::\    \              /::::\    \           \:::\    \
-      /::::::\    \            /::::::\    \           \:::\    \
-     /:::/\:::\    \          /:::/\:::\    \           \:::\    \
-    /:::/__\:::\    \        /:::/__\:::\    \           \:::\    \
-    \:::\   \:::\    \      /::::\   \:::\    \          /::::\    \
-  ___\:::\   \:::\    \    /::::::\   \:::\    \        /::::::\    \
- /\   \:::\   \:::\    \  /:::/\:::\   \:::\    \      /:::/\:::\    \
-/::\   \:::\   \:::\____\/:::/  \:::\   \:::\____\    /:::/  \:::\____\
-\:::\   \:::\   \::/    /\::/    \:::\  /:::/    /   /:::/    \::/    /
- \:::\   \:::\   \/____/  \/____/ \:::\/:::/    /   /:::/    / \/____/
-  \:::\   \:::\    \               \::::::/    /   /:::/    /
-   \:::\   \:::\____\               \::::/    /   /:::/    /
-    \:::\  /:::/    /               /:::/    /    \::/    /
-     \:::\/:::/    /               /:::/    /      \/____/
-      \::::::/    /               /:::/    /
-       \::::/    /               /:::/    /
-        \::/    /                \::/    /
-         \/____/                  \/____/
-
-EOF
-	printf 'Silent Authenticator Tool (SAT)  v%s  © 2026 SilentProtocol. Licensed under Apache-2.0.\n\n' "$APP_VERSION"
+	printf '\nSAT — Silent Authenticator\nVersion %s\n%s\n' "$APP_VERSION" '────────────────────────────────────────'
 }
 
 cmd_help() {
@@ -178,11 +153,11 @@ read_add_input() {
 		IFS= read -r ADD_SECRET || true
 	fi
 	if [[ -t 0 ]]; then
-		[[ -n "$ADD_LABEL" ]] || { printf 'Label: ' >&2; IFS= read -r ADD_LABEL; }
-		[[ -n "$ADD_ISSUER" ]] || { printf 'Issuer: ' >&2; IFS= read -r ADD_ISSUER; }
-		[[ -n "$ADD_ACCOUNT" ]] || { printf 'Account: ' >&2; IFS= read -r ADD_ACCOUNT; }
+		[[ -n "$ADD_LABEL" ]] || { ui label >&2; IFS= read -r ADD_LABEL; }
+		[[ -n "$ADD_ISSUER" ]] || { ui issuer >&2; IFS= read -r ADD_ISSUER; }
+		[[ -n "$ADD_ACCOUNT" ]] || { ui account >&2; IFS= read -r ADD_ACCOUNT; }
 		if [[ -z "$ADD_SECRET" ]]; then
-			printf 'Secret BASE32: ' >&2
+			ui secret_base32 >&2
 			IFS= read -r -s ADD_SECRET
 			printf '\n' >&2
 		fi
@@ -652,28 +627,35 @@ web_domain_require_tools() {
 	certbot plugins 2>/dev/null | grep -Fq 'dns-cloudflare' || fail 7 'certbot_cloudflare_plugin_missing' 'Plugin Certbot dns-cloudflare belum tersedia. Instal python3-certbot-dns-cloudflare.'
 }
 
-web_domain_cloudflare_credentials() {
-	local token='' confirmation='' temporary=''
+web_domain_collect_cloudflare_credentials() {
+	local confirmation=''
+	WEB_CLOUDFLARE_TOKEN=''
+	WEB_CLOUDFLARE_CREDENTIALS_READY='no'
 	if [[ -f "$SAT_WEB_CLOUDFLARE_CREDENTIALS" ]]; then
-		printf 'Gunakan token Cloudflare tersimpan di %s? [Y/n]: ' "$SAT_WEB_CLOUDFLARE_CREDENTIALS"
-		IFS= read -r confirmation || confirmation=''
-		case "${confirmation,,}" in n|no|tidak) ;; *) return 0 ;; esac
+		ui_section cloudflare
+		printf '%s\n' "$(ui cloudflare_stored)"
+		confirmation="$(ui_confirm cloudflare_reuse yes)" || fail 2 'cancelled' "$(ui cancelled)"
+		if [[ "$confirmation" == yes ]]; then WEB_CLOUDFLARE_CREDENTIALS_READY='yes'; return; fi
 	fi
-	printf '\nToken Cloudflare diperlukan untuk membuat dan memvalidasi TXT _acme-challenge.\n'
-	printf 'Buat token khusus zone dengan izin Zone > Zone > Read dan Zone > DNS > Edit.\n'
-	printf 'Batasi token hanya untuk zone domain ini; token disimpan mode 0600 agar renewal Certbot berjalan.\n'
-	printf 'Token Cloudflare (tersembunyi): ' >&2
-	IFS= read -r -s token
+	ui_section cloudflare
+	ui cloudflare_token_info; printf '\n'
+	ui cloudflare_token >&2
+	IFS= read -r -s WEB_CLOUDFLARE_TOKEN
 	printf '\n' >&2
-	[[ -n "$token" ]] || fail 6 'cloudflare_token_required' 'Token Cloudflare wajib untuk validasi DNS TXT.'
+	[[ -n "$WEB_CLOUDFLARE_TOKEN" ]] || fail 6 'cloudflare_token_required' "$(ui cloudflare_token_required)"
+}
+
+web_domain_store_cloudflare_credentials() {
+	local temporary=''
+	[[ "$WEB_CLOUDFLARE_CREDENTIALS_READY" == yes ]] && return
 	ensure_sat_home
 	temporary="$(mktemp "$SAT_HOME/.cloudflare.XXXXXX")"
 	chmod 600 -- "$temporary"
-	printf 'dns_cloudflare_api_token = %s\n' "$token" >"$temporary"
-	token=''
+	printf 'dns_cloudflare_api_token = %s\n' "$WEB_CLOUDFLARE_TOKEN" >"$temporary"
+	WEB_CLOUDFLARE_TOKEN=''
 	mv -f -- "$temporary" "$SAT_WEB_CLOUDFLARE_CREDENTIALS"
 	chmod 600 -- "$SAT_WEB_CLOUDFLARE_CREDENTIALS"
-	printf 'Kredensial Cloudflare disimpan di %s (0600) untuk renewal Certbot.\n' "$SAT_WEB_CLOUDFLARE_CREDENTIALS"
+	printf '%s\n' "$(ui cloudflare_saved)"
 }
 
 web_domain_render_vhost() {
@@ -752,7 +734,7 @@ web_domain_install_vhost() {
 }
 
 web_domain_setup_tls() {
-	local domain="$1" port="$2" cloudflare="$3" proxied='no' answer='' email='' vhost=''
+	local domain="$1" port="$2" cloudflare="$3" proxied='no' answer='' email='' vhost='' apply='yes'
 	case "$cloudflare" in
 		proxied) proxied='yes' ;;
 		dns-only) ;;
@@ -763,25 +745,45 @@ web_domain_setup_tls() {
 	web_domain_assert_owner "$domain"
 	web_domain_assert_upstream_isolated "$domain" "$port"
 	if [[ "$proxied" == 'yes' ]]; then
-		printf '\nPERINGATAN: Cloudflare dapat membaca trafik Web UI setelah terminasi TLS di edge.\n'
-		printf "Ketik 'yes' untuk menerima Cloudflare dalam trust boundary: "
+		ui_section security_notice
+		ui cloudflare_trust; printf '\n\n'
+		ui cloudflare_accept
 		IFS= read -r answer || answer=''
-		[[ "$answer" == 'yes' ]] || fail 2 'cloudflare_trust_not_accepted' 'Penerbitan domain dibatalkan karena trust Cloudflare tidak diterima.'
+		[[ "$answer" == 'yes' ]] || fail 2 'cloudflare_trust_not_accepted' "$(ui cancelled)"
 	fi
-	web_domain_cloudflare_credentials
-	printf 'Email kontak Let\x27s Encrypt (boleh kosong): '
+	web_domain_collect_cloudflare_credentials
+	ui_section tls_certificate
+	ui letsencrypt_email
 	IFS= read -r email || email=''
-	printf '\nTahap 1/2: validasi TXT DNS dan penerbitan sertifikat...\n'
+	if [[ "${SAT_WEB_INTERACTIVE_SETUP:-no}" == yes ]]; then
+		ui_section configuration_summary
+		printf '%-14s %s\n' 'Domain' "$domain"
+		printf '%-14s %s\n' 'Port' "$port"
+		printf '%-14s %s\n' "$(ui cloudflare_label)" "$(ui enabled)"
+		printf '%-14s %s\n' "$(ui proxy)" "$([[ "$proxied" == yes ]] && ui enabled || ui disabled)"
+		printf '%-14s %s\n' "$(ui https)" "Let's Encrypt"
+		printf '%-14s %s\n' "$(ui language)" "$SAT_LANG"
+		apply="$(ui_confirm apply_configuration yes)" || fail 2 'cancelled' "$(ui cancelled)"
+		[[ "$apply" == yes ]] || fail 2 'cancelled' "$(ui cancelled)"
+	fi
+	web_domain_store_cloudflare_credentials
+	printf '\n%s\n' "$(ui stage_tls)"
 	local certbot_args=(certonly --non-interactive --agree-tos --keep-until-expiring --cert-name "$domain" --dns-cloudflare --dns-cloudflare-credentials "$SAT_WEB_CLOUDFLARE_CREDENTIALS" --dns-cloudflare-propagation-seconds "${SAT_ACME_DNS_WAIT:-30}" -d "$domain")
 	[[ -n "$email" ]] && certbot_args+=(-m "$email") || certbot_args+=(--register-unsafely-without-email)
 	sudo certbot "${certbot_args[@]}" || fail 8 'certbot_failed' 'Certbot gagal memvalidasi TXT atau menerbitkan sertifikat; nginx tidak diubah.'
 	sudo test -f "/etc/letsencrypt/live/$domain/fullchain.pem" || fail 8 'certificate_missing' 'Certbot selesai tanpa file sertifikat yang dapat digunakan.'
 	[[ "$proxied" != 'yes' ]] || web_domain_write_cloudflare_realip
-	printf 'Tahap 2/2: mengaktifkan HTTPS nginx dan reverse proxy...\n'
+	printf '%s\n' "$(ui stage_nginx)"
 	vhost="$(web_domain_render_vhost "$domain" "$port" "$proxied")"
 	web_domain_install_vhost "$domain" "$vhost"
-	printf 'HTTPS siap di https://%s/; SAT akan tetap berada di 127.0.0.1:%s.\n' "$domain" "$port"
-	[[ "$proxied" != 'yes' ]] || printf 'Setel Cloudflare SSL/TLS ke Full (strict).\n'
+	printf '\n✓ %s\n\n' "$(ui setup_success)"
+	printf '%-14s https://%s\n' "$(ui url)" "$domain"
+	printf '%-14s 127.0.0.1:%s\n' "$(ui upstream)" "$port"
+	printf '%-14s %s\n' "$(ui https)" "$(ui active)"
+	printf '%-14s %s\n' "$(ui cloudflare_label)" "$(ui enabled)"
+	printf '%-14s %s\n' "$(ui proxy)" "$([[ "$proxied" == yes ]] && ui enabled || ui disabled)"
+	printf '\n%s\n' "$(ui localhost_only)"
+	[[ "$proxied" != 'yes' ]] || printf '%s\n' "$(ui cloudflare_strict)"
 }
 
 parse_web_options() {
@@ -811,17 +813,19 @@ parse_web_options() {
 	if { [[ -n "$WEB_DOMAIN" ]] || ! is_local_host "$WEB_HOST"; } && [[ -z "$WEB_TOKEN" ]]; then
 		if [[ -t 0 ]]; then
 			local token_confirmation=''
-			printf 'Buat token akses Web UI (minimal 16 karakter): ' >&2
+			ui_section web_security
+			ui web_token >&2
 			IFS= read -r -s WEB_TOKEN
-			printf '\nUlangi token akses: ' >&2
+			printf '\n' >&2
+			ui web_token_confirm >&2
 			IFS= read -r -s token_confirmation
 			printf '\n' >&2
-			[[ "$WEB_TOKEN" == "$token_confirmation" ]] || fail 6 'token_mismatch' 'Konfirmasi token Web UI tidak cocok.'
+			[[ "$WEB_TOKEN" == "$token_confirmation" ]] || fail 6 'token_mismatch' "$(ui web_token_mismatch)"
 		else
 			fail 6 'token_required' 'Binding jaringan membutuhkan token melalui prompt lokal atau SAT_WEB_TOKEN_FD.'
 		fi
 	fi
-	if [[ -n "$WEB_DOMAIN" ]] || ! is_local_host "$WEB_HOST"; then validate_web_token "$WEB_TOKEN" || fail 6 'invalid_token' 'Token Web UI harus 16 sampai 256 karakter tanpa karakter kontrol.'; fi
+	if [[ -n "$WEB_DOMAIN" ]] || ! is_local_host "$WEB_HOST"; then validate_web_token "$WEB_TOKEN" || fail 6 'invalid_token' "$(ui web_token_invalid)"; fi
 }
 
 run_web_server() {
@@ -896,59 +900,58 @@ cmd_web_status() {
 interactive_website_menu() {
 	while :; do
 		local choice domain port uses_cloudflare proxy_mode cloudflare_mode
-		if [[ "$SAT_LANG" == 'en' ]]; then
-			printf '\nWebsite\n1 Global VPS / IP\n2 Domain / subdomain\n3 Status\n4 Stop\n0 Back\nChoice: '
-		else
-			printf '\nWebsite\n1 Global VPS / IP\n2 Domain / subdomain\n3 Status\n4 Stop\n0 Kembali\nPilihan: '
-		fi
-		IFS= read -r choice
+		ui_section website
+		ui website_menu; printf '\n'; ui choice
+		IFS= read -r choice || return 0
 		case "$choice" in
 			1) run_web_server background --allow-network ;;
 			2)
-				if [[ "$SAT_LANG" == 'en' ]]; then printf 'Domain/subdomain HTTPS: '; else printf 'Domain/subdomain HTTPS: '; fi
-				IFS= read -r domain
-				printf 'Port (1024-65535): '
-				IFS= read -r port
-				if [[ "$SAT_LANG" == 'en' ]]; then printf 'Is DNS managed by Cloudflare? [Y/n]: '; else printf 'Apakah DNS menggunakan Cloudflare? [Y/n]: '; fi
-				IFS= read -r uses_cloudflare
+				ui_section web_address
+				while :; do
+					ui domain_prompt; IFS= read -r domain || return 0
+					[[ "${domain,,}" == cancel ]] && break 2
+					validate_domain_name "$domain" && break
+					printf '%s\n' "$(ui invalid_domain)" >&2
+				done
+				while :; do
+					ui port_prompt "${SAT_WEB_PORT:-8787}"; IFS= read -r port || return 0
+					port="${port:-${SAT_WEB_PORT:-8787}}"
+					validate_port "$port" && break
+					printf '%s\n' "$(ui invalid_port)" >&2
+				done
+				ui_section dns_configuration
+				uses_cloudflare="$(ui_confirm cloudflare_use yes)" || return 0
 				cloudflare_mode='dns-only'
-				case "${uses_cloudflare,,}" in
-					y|yes|ya)
-						if [[ "$SAT_LANG" == 'en' ]]; then printf 'Is the DNS record proxied (orange cloud)? [y/N]: '; else printf 'Apakah record memakai proxy (orange cloud)? [y/N]: '; fi
-						IFS= read -r proxy_mode
-						case "${proxy_mode,,}" in y|yes|ya) cloudflare_mode='proxied' ;; *) cloudflare_mode='dns-only' ;; esac
-					;;
-					*) fail 6 'cloudflare_dns_required' 'HTTPS domain SAT membutuhkan Cloudflare DNS untuk validasi TXT.' ;;
-				esac
-				run_web_server background --domain "$domain" --port "$port" --cloudflare "$cloudflare_mode"
+				if [[ "$uses_cloudflare" != yes ]]; then printf '%s\n' "$(ui domain_requires_cloudflare)" >&2; continue; fi
+				proxy_mode="$(ui_confirm cloudflare_proxy no)" || return 0
+				[[ "$proxy_mode" != yes ]] || cloudflare_mode='proxied'
+				SAT_WEB_INTERACTIVE_SETUP=yes run_web_server background --domain "$domain" --port "$port" --cloudflare "$cloudflare_mode"
 				;;
 			3) cmd_web_status || true ;;
 			4) cmd_web_stop ;;
 			0) return ;;
-			*) if [[ "$SAT_LANG" == 'en' ]]; then printf 'Unknown choice.\n'; else printf 'Pilihan tidak dikenal.\n'; fi ;;
+			*) printf '%s\n' "$(ui unknown_choice)" ;;
 		esac
 	done
 }
 
 interactive_menu() {
+	select_terminal_language
 	print_banner
 	while :; do
 		local choice label query
-		if [[ "$SAT_LANG" == 'en' ]]; then
-			printf '\nSAT %s\n1) List OTP entries\n2) Add OTP entry\n3) Generate OTP code\n4) Search OTP entries\n5) Website\n6) Backup\n0) Exit\nChoice: ' "$APP_VERSION"
-		else
-			printf '\nSAT %s\n1) Daftar entri OTP\n2) Tambah OTP\n3) Hasilkan kode OTP\n4) Cari entri OTP\n5) Website\n6) Backup\n0) Keluar\nPilihan: ' "$APP_VERSION"
-		fi
-		IFS= read -r choice
+		printf '\nSAT %s\n' "$APP_VERSION"; ui main_menu; printf '\n'; ui choice
+		IFS= read -r choice || return 0
 		case "$choice" in
 			1) cmd_list ;;
 			2) cmd_add ;;
-			3) printf 'Label: '; IFS= read -r label; cmd_code "$label" ;;
-			4) printf 'Query: '; IFS= read -r query; cmd_search "$query" ;;
+			3) ui label; IFS= read -r label; cmd_code "$label" ;;
+			4) ui query; IFS= read -r query; cmd_search "$query" ;;
 			5) interactive_website_menu ;;
 			6) cmd_backup ;;
+			7) select_terminal_language yes ;;
 			0) return ;;
-			*) printf 'Pilihan tidak dikenal.\n' ;;
+			*) printf '%s\n' "$(ui unknown_choice)" ;;
 		esac
 	done
 }
