@@ -81,6 +81,12 @@ Kontrak error khusus mode domain:
 
 Localhost can run without a web token, tetapi mode domain tetap mewajibkan token karena nginx meneruskannya ke Web UI. Token UI berada di memori proses/tab; token Cloudflare hanya dipakai Certbot dan disimpan dalam file mode `0600` untuk renewal. Setel Cloudflare ke `Full (strict)` setelah penerbitan sertifikat. Cloudflare proxy dapat melihat konten Web UI setelah TLS diterminasi di edge; gunakan `dns-only` bila Cloudflare tidak berada dalam trust boundary.
 
+## Terminal language and setup
+
+The interactive `./sat.sh menu` asks first-time terminal users to choose English or Bahasa Indonesia, then stores only that harmless preference in `$SAT_HOME/config` (mode `0600`). Choose **Language/Bahasa** from the main menu to change it. `SAT_LANG=en` or `SAT_LANG=id` remains an explicit, non-interactive override for scripts.
+
+The HTTPS domain wizard groups Address, DNS, Web UI Security, Cloudflare, and TLS questions. It validates the domain and origin port before continuing, keeps secret input hidden, requires an explicit `yes` for proxied Cloudflare trust, and presents a secret-free configuration summary before Certbot or Nginx changes are applied.
+
 ## Web UI Preview
 
 The screenshots below were captured with Google Chrome against a disposable vault containing synthetic `.invalid` accounts. No production vault or OTP material is shown.

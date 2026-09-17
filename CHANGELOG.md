@@ -4,6 +4,15 @@ All notable changes to SAT are documented here. SAT follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+
+- Added first-run terminal language selection and a persisted English/Bahasa Indonesia preference for interactive menus.
+- Added a structured HTTPS domain setup flow with address/DNS/security/TLS sections and a secret-free confirmation summary.
+
+### Changed
+
+- Standardized interactive yes/no parsing, port retry behavior, compact terminal hierarchy, and release governance around PRs and green CI.
+
 ## [1.2.0] - 2026-09-17
 
 ### Added
