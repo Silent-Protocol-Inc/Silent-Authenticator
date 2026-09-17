@@ -3,6 +3,8 @@
 APP_NAME='SAT - Silent Authenticator Tool'
 APP_VERSION="$(tr -d '\r\n' <"$SAT_ROOT/VERSION")"
 [[ "$APP_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { printf 'Invalid SAT version in %s/VERSION\n' "$SAT_ROOT" >&2; exit 70; }
+SAT_LANG_EXPLICIT='no'
+[[ -n "${SAT_LANG+x}" ]] && SAT_LANG_EXPLICIT='yes'
 SAT_LANG="${SAT_LANG:-id}"
 SAT_OUTPUT="${SAT_OUTPUT:-text}"
 SAT_HOME="${SAT_HOME:-${HOME}/.sat}"
@@ -12,6 +14,7 @@ SAT_WEB_PID_FILE="${SAT_WEB_PID_FILE:-$SAT_HOME/sat-web.pid}"
 SAT_WEB_LOG_FILE="${SAT_WEB_LOG_FILE:-$SAT_HOME/sat-web.log}"
 SAT_WEB_STATE_FILE="${SAT_WEB_STATE_FILE:-$SAT_HOME/sat-web.state}"
 SAT_WEB_CLOUDFLARE_CREDENTIALS="${SAT_WEB_CLOUDFLARE_CREDENTIALS:-$SAT_HOME/cloudflare.ini}"
+SAT_CONFIG_FILE="${SAT_CONFIG_FILE:-$SAT_HOME/config}"
 SAT_MASTER_PASS_VALUE=''
 SAT_EXTERNAL_TEMP_FILES=()
 
@@ -118,7 +121,7 @@ read_master_pass() {
 		SAT_MASTER_PASS_VALUE="$(read_secret_from_fd "$SAT_MASTER_PASS_FD")"
 	else
 		[[ -t 0 ]] || fail 3 'password_required' 'Master password harus diberikan melalui terminal atau SAT_MASTER_PASS_FD.'
-		printf 'Master password: ' >&2
+		if declare -F ui >/dev/null 2>&1; then ui master_password >&2; else printf 'Master password: ' >&2; fi
 		IFS= read -r -s SAT_MASTER_PASS_VALUE
 		printf '\n' >&2
 	fi

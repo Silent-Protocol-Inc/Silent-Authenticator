@@ -316,28 +316,43 @@ jq -e '.error == "invalid_domain"' <<<"$invalid_domain_error" >/dev/null || fail
 jq -e '.error == "cloudflare_dns_required"' <<<"$invalid_cloudflare_dns_error" >/dev/null || fail_test 'HTTPS domain must return the Cloudflare DNS machine code'
 
 menu_output="$(printf '5\n0\n0\n' | SAT_HOME="$SAT_TEST_HOME" "$SAT_PROJECT_ROOT/sat.sh" menu)"
-grep -Fq 'Silent Authenticator Tool (SAT)' <<<"$menu_output" || fail_test 'interactive menu must render the SAT ASCII banner'
-grep -Fq "v$SAT_EXPECTED_VERSION  © 2026 SilentProtocol. Licensed under Apache-2.0." <<<"$menu_output" || fail_test 'interactive menu must render the release version, copyright year, and open-source license'
+grep -Fq 'SAT — Silent Authenticator' <<<"$menu_output" || fail_test 'interactive menu must render the compact SAT header'
+grep -Fq "Version $SAT_EXPECTED_VERSION" <<<"$menu_output" || fail_test 'interactive menu must render the release version'
 grep -Fq $'1) Daftar entri OTP\n2) Tambah OTP\n3) Hasilkan kode OTP' <<<"$menu_output" || fail_test 'interactive CLI menu must render vertically in Indonesian'
+grep -Fq '7) Bahasa' <<<"$menu_output" || fail_test 'interactive CLI menu must provide language settings'
 grep -Fq 'Global VPS / IP' <<<"$menu_output" || fail_test 'website submenu must include global VPS/IP mode'
-grep -Fq 'Domain / subdomain' <<<"$menu_output" || fail_test 'website submenu must include domain mode'
+grep -Fq 'Domain / subdomain dengan HTTPS' <<<"$menu_output" || fail_test 'website submenu must include HTTPS domain mode'
 
 set +e
 indonesian_domain_menu_output="$(printf '5\n2\nsat.example.com\ninvalid\nn\n' | SAT_HOME="$SAT_TEST_HOME" "$SAT_PROJECT_ROOT/sat.sh" menu 2>&1)"
 indonesian_domain_menu_status=$?
 set -e
-[[ "$indonesian_domain_menu_status" -eq 6 ]] || fail_test 'Indonesian domain menu must validate the prompted port'
-grep -Fq 'Domain/subdomain HTTPS: Port (1024-65535): Apakah DNS menggunakan Cloudflare? [Y/n]:' <<<"$indonesian_domain_menu_output" || fail_test 'Indonesian domain menu must prompt for port before DNS mode'
+[[ "$indonesian_domain_menu_status" -eq 0 ]] || fail_test 'Indonesian domain menu must return safely after incomplete input'
+grep -Fq 'Alamat Web UI' <<<"$indonesian_domain_menu_output" || fail_test 'Indonesian domain menu must group address prompts'
+grep -Fq 'Port [8787]:' <<<"$indonesian_domain_menu_output" || fail_test 'Indonesian domain menu must prompt for port before DNS mode'
+grep -Fq 'Port harus antara 1024 dan 65535.' <<<"$indonesian_domain_menu_output" || fail_test 'Indonesian domain menu must retry an invalid port without changing configuration'
 
 english_menu_output="$(printf '0\n' | SAT_HOME="$SAT_TEST_HOME" SAT_LANG=en "$SAT_PROJECT_ROOT/sat.sh" menu)"
 grep -Fq $'1) List OTP entries\n2) Add OTP entry\n3) Generate OTP code' <<<"$english_menu_output" || fail_test 'interactive CLI menu must render vertically in English'
+grep -Fq '7) Language' <<<"$english_menu_output" || fail_test 'English interactive CLI menu must provide language settings'
 
 set +e
 english_domain_menu_output="$(printf '5\n2\nsat.example.com\ninvalid\nn\n' | SAT_HOME="$SAT_TEST_HOME" SAT_LANG=en "$SAT_PROJECT_ROOT/sat.sh" menu 2>&1)"
 english_domain_menu_status=$?
 set -e
-[[ "$english_domain_menu_status" -eq 6 ]] || fail_test 'English domain menu must validate the prompted port'
-grep -Fq 'Domain/subdomain HTTPS: Port (1024-65535): Is DNS managed by Cloudflare? [Y/n]:' <<<"$english_domain_menu_output" || fail_test 'English domain menu must prompt for port before DNS mode'
+[[ "$english_domain_menu_status" -eq 0 ]] || fail_test 'English domain menu must return safely after incomplete input'
+grep -Fq 'Web UI Address' <<<"$english_domain_menu_output" || fail_test 'English domain menu must group address prompts'
+grep -Fq 'Port [8787]:' <<<"$english_domain_menu_output" || fail_test 'English domain menu must prompt for port before DNS mode'
+grep -Fq 'Port must be between 1024 and 65535.' <<<"$english_domain_menu_output" || fail_test 'English domain menu must retry an invalid port without changing configuration'
+
+language_persistence_output="$(SAT_ROOT="$SAT_PROJECT_ROOT" SAT_HOME="$SAT_TEST_HOME/language" SAT_LANG=id bash -c '
+	source "$SAT_ROOT/lib/common.sh"
+	source "$SAT_ROOT/lib/ui.sh"
+	SAT_LANG=en; save_language
+	SAT_LANG=id; SAT_LANG_EXPLICIT=no; load_saved_language
+	printf "%s" "$SAT_LANG"
+')"
+[[ "$language_persistence_output" == en ]] || fail_test 'saved terminal language must be restored safely'
 
 oversized_secret="$(python3 -c 'print("A" * 1025)')"
 set +e

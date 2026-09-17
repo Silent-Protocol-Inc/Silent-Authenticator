@@ -29,6 +29,7 @@ jobs:
           python3 -m py_compile lib/totp.py web/server.py
           node --check web/static/app.js
           python3 tests/test_totp.py
+          ./tests/test_terminal_ui.sh
           python3 tests/test_server.py
           python3 tests/verify_design.py
           ./tests/integration.sh
