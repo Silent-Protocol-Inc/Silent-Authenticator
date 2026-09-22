@@ -337,12 +337,14 @@ grep -Fq 'Global VPS / IP' <<<"$menu_output" || fail_test 'website submenu must 
 grep -Fq 'Domain / subdomain dengan HTTPS' <<<"$menu_output" || fail_test 'website submenu must include HTTPS domain mode'
 
 set +e
-indonesian_domain_menu_output="$(printf '5\n2\nsat.example.com\ninvalid\nn\n' | SAT_HOME="$SAT_TEST_HOME" "$SAT_PROJECT_ROOT/sat.sh" menu 2>&1)"
+indonesian_domain_menu_output="$(printf '5\n2\nsat.example.com\nn\ninvalid\n8099\nn\n' | SAT_HOME="$SAT_TEST_HOME" "$SAT_PROJECT_ROOT/sat.sh" menu 2>&1)"
 indonesian_domain_menu_status=$?
 set -e
 [[ "$indonesian_domain_menu_status" -eq 0 ]] || fail_test 'Indonesian domain menu must return safely after incomplete input'
 grep -Fq 'Alamat Web UI' <<<"$indonesian_domain_menu_output" || fail_test 'Indonesian domain menu must group address prompts'
-grep -Fq 'Port [8787]:' <<<"$indonesian_domain_menu_output" || fail_test 'Indonesian domain menu must prompt for port before DNS mode'
+grep -Fq 'Port origin localhost yang dipilih otomatis:' <<<"$indonesian_domain_menu_output" || fail_test 'Indonesian domain menu must select an origin port before DNS mode'
+grep -Fq 'Gunakan port ini? [Y/n]:' <<<"$indonesian_domain_menu_output" || fail_test 'Indonesian domain menu must ask whether to use the generated port'
+grep -Fq 'Port origin (1024-65535):' <<<"$indonesian_domain_menu_output" || fail_test 'Indonesian domain menu must provide a manual origin-port fallback'
 grep -Fq 'Port harus antara 1024 dan 65535.' <<<"$indonesian_domain_menu_output" || fail_test 'Indonesian domain menu must retry an invalid port without changing configuration'
 
 english_menu_output="$(printf '0\n' | SAT_HOME="$SAT_TEST_HOME" SAT_LANG=en "$SAT_PROJECT_ROOT/sat.sh" menu)"
@@ -350,12 +352,14 @@ grep -Fq $'1) List OTP entries\n2) Add OTP entry\n3) Generate OTP code' <<<"$eng
 grep -Fq '7) Language' <<<"$english_menu_output" || fail_test 'English interactive CLI menu must provide language settings'
 
 set +e
-english_domain_menu_output="$(printf '5\n2\nsat.example.com\ninvalid\nn\n' | SAT_HOME="$SAT_TEST_HOME" SAT_LANG=en "$SAT_PROJECT_ROOT/sat.sh" menu 2>&1)"
+english_domain_menu_output="$(printf '5\n2\nsat.example.com\nn\ninvalid\n8099\nn\n' | SAT_HOME="$SAT_TEST_HOME" SAT_LANG=en "$SAT_PROJECT_ROOT/sat.sh" menu 2>&1)"
 english_domain_menu_status=$?
 set -e
 [[ "$english_domain_menu_status" -eq 0 ]] || fail_test 'English domain menu must return safely after incomplete input'
 grep -Fq 'Web UI Address' <<<"$english_domain_menu_output" || fail_test 'English domain menu must group address prompts'
-grep -Fq 'Port [8787]:' <<<"$english_domain_menu_output" || fail_test 'English domain menu must prompt for port before DNS mode'
+grep -Fq 'Automatically selected local origin port:' <<<"$english_domain_menu_output" || fail_test 'English domain menu must select an origin port before DNS mode'
+grep -Fq 'Use this port? [Y/n]:' <<<"$english_domain_menu_output" || fail_test 'English domain menu must ask whether to use the generated port'
+grep -Fq 'Origin port (1024-65535):' <<<"$english_domain_menu_output" || fail_test 'English domain menu must provide a manual origin-port fallback'
 grep -Fq 'Port must be between 1024 and 65535.' <<<"$english_domain_menu_output" || fail_test 'English domain menu must retry an invalid port without changing configuration'
 
 language_persistence_output="$(SAT_ROOT="$SAT_PROJECT_ROOT" SAT_HOME="$SAT_TEST_HOME/language" SAT_LANG=id bash -c '

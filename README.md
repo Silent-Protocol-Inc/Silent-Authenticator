@@ -7,7 +7,7 @@
 [![GitHub top language](https://img.shields.io/github/languages/top/Silent-Protocol-Inc/Silent-Authenticator?style=flat-square)](https://github.com/Silent-Protocol-Inc/Silent-Authenticator)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=flat-square)](LICENSE)
 
-SAT is a local-first TOTP manager with an encrypted OpenSSL vault, a Bash CLI, and an optional Python web interface. Version 1.4.0 keeps the legacy `otp.vault` encryption format while separating vault policy, CLI commands, HTTP transport, and browser assets.
+SAT is a local-first TOTP manager with an encrypted OpenSSL vault, a Bash CLI, and an optional Python web interface. Version 1.4.1 keeps the legacy `otp.vault` encryption format while separating vault policy, CLI commands, HTTP transport, and browser assets.
 
 ## Project Structure
 
@@ -61,7 +61,7 @@ Karena PM2 harus dapat memulai ulang SAT tanpa prompt setelah reboot, mode backg
 
 For the previous direct-from-VPS workflow, run `sat web-public`. It asks for the master password and a separate Web UI token, binds to the network, and prints the detected VPS URL. Enter that token in the browser access gate. The token stays out of argv, URLs, logs, environment values, and browser storage.
 
-Untuk domain atau subdomain, pilih `Website` lalu `Domain / subdomain HTTPS` dari menu. SAT meminta domain, port origin localhost, mode Cloudflare, token API DNS, dan email Certbot. Alternatifnya, gunakan CLI berikut:
+Untuk domain atau subdomain, pilih `Website` lalu `Domain / subdomain HTTPS` dari menu. Wizard memilih port origin localhost tinggi yang tersedia secara acak, meminta konfirmasi Ya/Tidak, lalu menyediakan input port manual bila diperlukan sebelum menanyakan mode Cloudflare, token API DNS, dan email Certbot. Alternatifnya, gunakan CLI berikut:
 
 ```bash
 ./sat.sh web-domain sat.example.com --cloudflare dns-only

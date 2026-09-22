@@ -4,6 +4,13 @@ All notable changes to SAT are documented here. SAT follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-09-22
+
+### Fixed
+
+- Select an available high localhost origin port automatically in the HTTPS-domain wizard, with a visible Yes/No confirmation and a manual-port fallback.
+- Render confirmation prompts to the terminal while preserving machine-readable Yes/No values for the caller.
+
 ## [1.4.0] - 2026-09-22
 
 ### Added

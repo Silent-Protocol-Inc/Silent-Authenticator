@@ -21,6 +21,10 @@ ui() {
 			web_address) printf 'Web UI Address' ;;
 			domain_prompt) printf 'Domain or subdomain: ' ;;
 			port_prompt) printf 'Port [%s]: ' "$2" ;;
+			origin_port) printf 'Origin Port' ;;
+			generated_port) printf 'Automatically selected local origin port: %s' "$2" ;;
+			use_generated_port) printf 'Use this port? [Y/n]: ' ;;
+			manual_port) printf 'Origin port (1024-65535): ' ;;
 			invalid_domain) printf 'Enter a valid DNS hostname, for example sat.example.com.' ;;
 			invalid_port) printf 'Port must be between 1024 and 65535.' ;;
 			dns_configuration) printf 'DNS Configuration' ;;
@@ -86,6 +90,10 @@ ui() {
 			web_address) printf 'Alamat Web UI' ;;
 			domain_prompt) printf 'Domain atau subdomain: ' ;;
 			port_prompt) printf 'Port [%s]: ' "$2" ;;
+			origin_port) printf 'Port Origin' ;;
+			generated_port) printf 'Port origin localhost yang dipilih otomatis: %s' "$2" ;;
+			use_generated_port) printf 'Gunakan port ini? [Y/n]: ' ;;
+			manual_port) printf 'Port origin (1024-65535): ' ;;
 			invalid_domain) printf 'Masukkan hostname DNS yang valid, misalnya sat.example.com.' ;;
 			invalid_port) printf 'Port harus antara 1024 dan 65535.' ;;
 			dns_configuration) printf 'Konfigurasi DNS' ;;
@@ -191,7 +199,9 @@ ui_parse_boolean() {
 ui_confirm() {
 	local prompt="$1" default="$2" answer parsed
 	while :; do
-		ui "$prompt"
+		# Confirmation is captured by callers through command substitution. Render
+		# the prompt on stderr so it stays visible while stdout carries only yes/no.
+		ui "$prompt" >&2
 		IFS= read -r answer || return 1
 		parsed="$(ui_parse_boolean "$answer")" || { printf '%s\n' "$(ui invalid_choice)" >&2; continue; }
 		[[ "$parsed" == default ]] && parsed="$default"
