@@ -94,7 +94,7 @@ cmd_doctor() {
 			return 1
 		fi
 		local payload='[]'
-		for name in bash openssl jq python3 flock zip unzip; do
+		for name in bash openssl jq python3 flock zip unzip pm2; do
 			if command -v "$name" >/dev/null 2>&1; then
 				payload="$(jq -cn --argjson rows "$payload" --arg name "$name" '$rows + [{name:$name,status:"ok"}]')"
 			else
@@ -108,7 +108,7 @@ cmd_doctor() {
 			'{status:$status,vault:{path:$vault,exists:$vault_exists},dependencies:$dependencies}'
 	else
 		printf '%-12s %s\n' 'DEPENDENCY' 'STATUS'
-		for name in bash openssl jq python3 flock zip unzip; do
+		for name in bash openssl jq python3 flock zip unzip pm2; do
 			if command -v "$name" >/dev/null 2>&1; then
 				printf '%-12s %s\n' "$name" 'ok'
 			else
@@ -229,7 +229,7 @@ cmd_add() {
 			--argjson digits "$ADD_DIGITS" --argjson period "$ADD_PERIOD" --arg algo "$ADD_ALGO" \
 			'{status:"created",label:$lbl,issuer:$issuer,account:$account,digits:$digits,period:$period,algo:$algo}'
 	else
-		printf "OTP '%s' disimpan.\n" "$ADD_LABEL"
+		ui otp_saved "$ADD_LABEL"; printf '\n'
 	fi
 }
 
@@ -385,7 +385,7 @@ cmd_codes() {
 	result="$(python3 "$SAT_ROOT/lib/totp.py" codes --vault "$plain")"
 	if [[ "$SAT_OUTPUT" == 'json' ]]; then printf '%s\n' "$result"
 	else
-		printf '%-24s %-12s %-8s %s\n' 'LABEL' 'CODE' 'SISA' 'ISSUER'
+		printf '%-24s %-12s %-8s %s\n' 'LABEL' 'CODE' "$(ui remaining)" 'ISSUER'
 		jq -r '.entries[] | [.label,.code,(.expires_in|tostring),.issuer] | @tsv' <<<"$result" |
 			while IFS=$'\t' read -r label code remaining issuer; do printf '%-24s %-12s %-8s %s\n' "$label" "$code" "${remaining}s" "$issuer"; done
 	fi
@@ -406,7 +406,7 @@ cmd_delete() {
 	exists="$(jq -r --arg lbl "$label" 'has($lbl)' "$plain")"
 	[[ "$exists" == 'true' ]] || { release_vault_lock; fail 4 'not_found' "Label '$label' tidak ditemukan."; }
 	jq --arg lbl "$label" 'del(.[$lbl])' "$plain" >"$updated"; encrypt_file_to_vault "$updated"; release_vault_lock
-	if [[ "$SAT_OUTPUT" == 'json' ]]; then jq -cn --arg lbl "$label" '{status:"deleted",label:$lbl}'; else printf "OTP '%s' dihapus.\n" "$label"; fi
+	if [[ "$SAT_OUTPUT" == 'json' ]]; then jq -cn --arg lbl "$label" '{status:"deleted",label:$lbl}'; else ui otp_deleted "$label"; printf '\n'; fi
 }
 
 validate_bundle_name() {
@@ -538,6 +538,56 @@ web_running_pid() {
 	cmdline="$(tr '\0' ' ' <"/proc/$pid/cmdline")"
 	[[ "$cmdline" == *"$SAT_ROOT/web/server.py"* ]] || { rm -f "$SAT_WEB_PID_FILE" "$SAT_WEB_STATE_FILE"; return 1; }
 	kill -0 "$pid" 2>/dev/null || { rm -f "$SAT_WEB_PID_FILE" "$SAT_WEB_STATE_FILE"; return 1; }
+	printf '%s' "$pid"
+}
+
+web_pm2_name() {
+	local owner
+	owner="$(web_domain_owner_id)"
+	printf 'sat-web-%s' "$owner"
+}
+
+web_store_restart_credentials() {
+	local temporary
+	require_cmd openssl
+	ensure_sat_home
+	if [[ ! -f "$SAT_WEB_RESTART_KEY_FILE" ]]; then
+		temporary="$(mktemp "$SAT_HOME/.sat-web-key.XXXXXX")"
+		chmod 600 -- "$temporary"
+		openssl rand -out "$temporary" 32
+		mv -f -- "$temporary" "$SAT_WEB_RESTART_KEY_FILE"
+		chmod 600 -- "$SAT_WEB_RESTART_KEY_FILE"
+	fi
+	temporary="$(mktemp "$SAT_HOME/.sat-web-credentials.XXXXXX")"
+	chmod 600 -- "$temporary"
+	printf '%s\n%s\nSAT_END' "$SAT_MASTER_PASS_VALUE" "$WEB_TOKEN" | openssl enc -aes-256-cbc -pbkdf2 -md sha256 -pass "file:$SAT_WEB_RESTART_KEY_FILE" -out "$temporary"
+	mv -f -- "$temporary" "$SAT_WEB_RESTART_CREDENTIALS_FILE"
+	chmod 600 -- "$SAT_WEB_RESTART_CREDENTIALS_FILE"
+}
+
+web_enable_pm2_startup() {
+	local service_name pm2_path
+	[[ "${SAT_PM2_SKIP_STARTUP:-no}" == 'yes' ]] && return
+	require_cmd sudo
+	pm2_path="$(command -v pm2)"
+	service_name="pm2-$(id -un)"
+	if systemctl is-enabled --quiet "$service_name" 2>/dev/null; then return; fi
+	sudo env "PATH=$PATH" "$pm2_path" startup systemd -u "$(id -un)" --hp "$HOME" >/dev/null
+	systemctl is-enabled --quiet "$service_name" 2>/dev/null || fail 8 'pm2_startup_failed' 'PM2 belum dapat dikonfigurasi untuk mulai otomatis saat sistem boot.'
+}
+
+web_start_pm2() {
+	local name="$1" host="$2" port="$3" domain="$4" pid=''
+	require_cmd pm2
+	web_enable_pm2_startup
+	web_store_restart_credentials
+	touch "$SAT_WEB_LOG_FILE"
+	chmod 600 -- "$SAT_WEB_LOG_FILE"
+	pm2 delete "$name" >/dev/null 2>&1 || true
+	pm2 start "$SAT_ROOT/web/pm2-runner.sh" --name "$name" --interpreter bash --output "$SAT_WEB_LOG_FILE" --error "$SAT_WEB_LOG_FILE" --time -- "$SAT_ROOT" "$SAT_HOME" "$host" "$port" "$domain" >/dev/null
+	pm2 save >/dev/null
+	pid="$(pm2 pid "$name" 2>/dev/null | head -n 1)"
+	[[ "$pid" =~ ^[0-9]+$ ]] || fail 8 'pm2_start_failed' 'PM2 gagal memulai SAT Web UI.'
 	printf '%s' "$pid"
 }
 
@@ -690,6 +740,7 @@ web_domain_render_vhost() {
 	printf '# SAT owner: %s\n' "$(web_domain_owner_id)"
 	printf '# SAT listens only on 127.0.0.1:%s; nginx terminates public TLS.\n\n' "$port"
 	printf 'server {\n    listen 80;\n    listen [::]:80;\n    server_name %s;\n\n' "$domain"
+	# shellcheck disable=SC2016 # nginx variables must remain literal in the generated vhost
 	printf '    location / { return 301 https://$host$request_uri; }\n}\n\n'
 	printf 'server {\n'
 	if [[ "$nginx_version" =~ ^1\.([2-9][5-9]|[3-9][0-9])\. ]] || [[ "$nginx_version" =~ ^[2-9]\. ]]; then
@@ -708,9 +759,13 @@ web_domain_render_vhost() {
 	printf '    location / {\n'
 	printf '        proxy_pass http://127.0.0.1:%s;\n' "$port"
 	printf '        proxy_http_version 1.1;\n'
+	# shellcheck disable=SC2016 # nginx variables must remain literal in the generated vhost
 	printf '        proxy_set_header Host $host;\n'
+	# shellcheck disable=SC2016 # nginx variables must remain literal in the generated vhost
 	printf '        proxy_set_header X-Real-IP $remote_addr;\n'
+	# shellcheck disable=SC2016 # nginx variables must remain literal in the generated vhost
 	printf '        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n'
+	# shellcheck disable=SC2016 # nginx variables must remain literal in the generated vhost
 	printf '        proxy_set_header X-Forwarded-Proto $scheme;\n'
 	printf '        proxy_read_timeout 300s;\n'
 	printf '    }\n}\n'
@@ -785,7 +840,11 @@ web_domain_setup_tls() {
 		printf '%-14s %s\n' 'Domain' "$domain"
 		printf '%-14s %s\n' 'Port' "$port"
 		printf '%-14s %s\n' "$(ui cloudflare_label)" "$(ui enabled)"
-		printf '%-14s %s\n' "$(ui proxy)" "$([[ "$proxied" == yes ]] && ui enabled || ui disabled)"
+		if [[ "$proxied" == yes ]]; then
+			printf '%-14s %s\n' "$(ui proxy)" "$(ui enabled)"
+		else
+			printf '%-14s %s\n' "$(ui proxy)" "$(ui disabled)"
+		fi
 		printf '%-14s %s\n' "$(ui https)" "Let's Encrypt"
 		printf '%-14s %s\n' "$(ui language)" "$SAT_LANG"
 		apply="$(ui_confirm apply_configuration yes)" || fail 2 'cancelled' "$(ui cancelled)"
@@ -806,7 +865,11 @@ web_domain_setup_tls() {
 	printf '%-14s 127.0.0.1:%s\n' "$(ui upstream)" "$port"
 	printf '%-14s %s\n' "$(ui https)" "$(ui active)"
 	printf '%-14s %s\n' "$(ui cloudflare_label)" "$(ui enabled)"
-	printf '%-14s %s\n' "$(ui proxy)" "$([[ "$proxied" == yes ]] && ui enabled || ui disabled)"
+	if [[ "$proxied" == yes ]]; then
+		printf '%-14s %s\n' "$(ui proxy)" "$(ui enabled)"
+	else
+		printf '%-14s %s\n' "$(ui proxy)" "$(ui disabled)"
+	fi
 	printf '\n%s\n' "$(ui localhost_only)"
 	[[ "$proxied" != 'yes' ]] || printf '%s\n' "$(ui cloudflare_strict)"
 }
@@ -868,35 +931,41 @@ run_web_server() {
 		"${server[@]}" 3<<<"$SAT_MASTER_PASS_VALUE" 4<<<"$WEB_TOKEN"
 	else
 		ensure_sat_home
-		local pid ready='no' attempt
+		local pid ready='no' name
 		if pid="$(web_running_pid)"; then cmd_web_status; return; fi
-		setsid "${server[@]}" 3<<<"$SAT_MASTER_PASS_VALUE" 4<<<"$WEB_TOKEN" >"$SAT_WEB_LOG_FILE" 2>&1 < /dev/null &
-		pid=$!; printf '%s\n' "$pid" >"$SAT_WEB_PID_FILE"
-		for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+		pid="$(web_start_pm2 "$(web_pm2_name)" "$WEB_HOST" "$WEB_PORT" "$WEB_DOMAIN")"
+		printf '%s\n' "$pid" >"$SAT_WEB_PID_FILE"
+		for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
 			if kill -0 "$pid" 2>/dev/null && web_health_check "$WEB_HOST" "$WEB_PORT" "$WEB_DOMAIN"; then ready='yes'; break; fi
 			sleep 0.2
 		done
 		if [[ "$ready" != 'yes' ]]; then
-			kill -TERM "$pid" 2>/dev/null || true
-			wait "$pid" 2>/dev/null || true
-			rm -f "$SAT_WEB_PID_FILE" "$SAT_WEB_STATE_FILE"
+			name="$(web_pm2_name)"
+			if command -v pm2 >/dev/null 2>&1; then pm2 delete "$name" >/dev/null 2>&1 || true; pm2 save >/dev/null 2>&1 || true; else kill -TERM "$pid" 2>/dev/null || true; fi
+			rm -f "$SAT_WEB_PID_FILE" "$SAT_WEB_STATE_FILE" "$SAT_WEB_RESTART_CREDENTIALS_FILE" "$SAT_WEB_RESTART_KEY_FILE"
 			fail 8 'web_start_failed' "Web server tidak siap. Periksa konflik port dan $SAT_WEB_LOG_FILE"
 		fi
 		printf '%s\n%s\n%s\n%s\n%s\n' "$WEB_HOST" "$WEB_PORT" "$display_host" "$WEB_DEPLOYMENT" "$WEB_CLOUDFLARE" >"$SAT_WEB_STATE_FILE"
-		chmod 600 -- "$SAT_WEB_PID_FILE" "$SAT_WEB_STATE_FILE" "$SAT_WEB_LOG_FILE"
+		chmod 600 -- "$SAT_WEB_PID_FILE" "$SAT_WEB_STATE_FILE"
+		[[ ! -e "$SAT_WEB_LOG_FILE" ]] || chmod 600 -- "$SAT_WEB_LOG_FILE"
 		printf 'SAT Web UI berjalan (PID %s) di %s\n' "$pid" "$web_url"
 		[[ "$WEB_DEPLOYMENT" != 'domain' ]] || printf 'SAT hanya mendengarkan localhost; nginx menangani HTTPS domain.\n'
 	fi
 }
 
 cmd_web_stop() {
-	local pid
-	if ! pid="$(web_running_pid)"; then printf 'SAT Web UI tidak berjalan.\n'; return; fi
-	kill -TERM "$pid"; local _; for _ in 1 2 3 4 5; do kill -0 "$pid" 2>/dev/null || break; sleep 0.2; done
-	if kill -0 "$pid" 2>/dev/null; then
-		fail 8 'web_stop_failed' "SAT Web UI belum berhenti (PID $pid); periksa proses dan $SAT_WEB_LOG_FILE."
+	local pid='' name
+	name="$(web_pm2_name)"
+	if command -v pm2 >/dev/null 2>&1 && pm2 delete "$name" >/dev/null 2>&1; then
+		pm2 save >/dev/null
+	elif pid="$(web_running_pid)"; then
+		kill -TERM "$pid"
+	else
+		printf 'SAT Web UI tidak berjalan.\n'
+		return
 	fi
-	rm -f "$SAT_WEB_PID_FILE" "$SAT_WEB_STATE_FILE"; printf 'SAT Web UI dihentikan.\n'
+	rm -f "$SAT_WEB_PID_FILE" "$SAT_WEB_STATE_FILE" "$SAT_WEB_RESTART_CREDENTIALS_FILE" "$SAT_WEB_RESTART_KEY_FILE"
+	printf 'SAT Web UI dihentikan.\n'
 }
 
 cmd_web_status() {

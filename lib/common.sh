@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC2034 # consumed by modules sourced by sat.sh
 APP_NAME='SAT - Silent Authenticator Tool'
 APP_VERSION="$(tr -d '\r\n' <"$SAT_ROOT/VERSION")"
 [[ "$APP_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { printf 'Invalid SAT version in %s/VERSION\n' "$SAT_ROOT" >&2; exit 70; }
+# shellcheck disable=SC2034 # consumed by the interactive UI module
 SAT_LANG_EXPLICIT='no'
 [[ -n "${SAT_LANG+x}" ]] && SAT_LANG_EXPLICIT='yes'
 SAT_LANG="${SAT_LANG:-id}"
@@ -14,6 +16,8 @@ SAT_WEB_PID_FILE="${SAT_WEB_PID_FILE:-$SAT_HOME/sat-web.pid}"
 SAT_WEB_LOG_FILE="${SAT_WEB_LOG_FILE:-$SAT_HOME/sat-web.log}"
 SAT_WEB_STATE_FILE="${SAT_WEB_STATE_FILE:-$SAT_HOME/sat-web.state}"
 SAT_WEB_CLOUDFLARE_CREDENTIALS="${SAT_WEB_CLOUDFLARE_CREDENTIALS:-$SAT_HOME/cloudflare.ini}"
+SAT_WEB_RESTART_KEY_FILE="${SAT_WEB_RESTART_KEY_FILE:-$SAT_HOME/sat-web-restart.key}"
+SAT_WEB_RESTART_CREDENTIALS_FILE="${SAT_WEB_RESTART_CREDENTIALS_FILE:-$SAT_HOME/sat-web-restart.enc}"
 SAT_CONFIG_FILE="${SAT_CONFIG_FILE:-$SAT_HOME/config}"
 SAT_MASTER_PASS_VALUE=''
 SAT_EXTERNAL_TEMP_FILES=()
@@ -80,6 +84,7 @@ fail() {
 	if [[ "$SAT_OUTPUT" == 'json' ]]; then
 		json_error "$error_code" "$message" >&2
 	else
+		if declare -F ui_localize_message >/dev/null 2>&1; then message="$(ui_localize_message "$message")"; fi
 		printf 'Error: %s\n' "$message" >&2
 	fi
 	exit "$exit_code"

@@ -21,7 +21,10 @@ jobs:
         with:
           node-version: '22'
       - name: Install system checks
-        run: sudo apt-get update && sudo apt-get install -y shellcheck jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck jq
+          npm install --global pm2@5
       - name: Verify
         run: |
           bash -n sat.sh lib/*.sh

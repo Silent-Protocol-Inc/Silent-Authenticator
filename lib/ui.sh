@@ -38,6 +38,9 @@ ui() {
 			account) printf 'Account: ' ;;
 			secret_base32) printf 'BASE32 secret: ' ;;
 			query) printf 'Query: ' ;;
+			remaining) printf 'REMAINING' ;;
+			otp_saved) printf "OTP '%s' saved." "$2" ;;
+			otp_deleted) printf "OTP '%s' deleted." "$2" ;;
 			cloudflare) printf 'Cloudflare' ;;
 			cloudflare_stored) printf 'Stored Cloudflare credentials were found.' ;;
 			cloudflare_reuse) printf 'Use the stored Cloudflare token? [Y/n]: ' ;;
@@ -100,6 +103,9 @@ ui() {
 			account) printf 'Account: ' ;;
 			secret_base32) printf 'Secret BASE32: ' ;;
 			query) printf 'Kueri: ' ;;
+			remaining) printf 'SISA' ;;
+			otp_saved) printf "OTP '%s' disimpan." "$2" ;;
+			otp_deleted) printf "OTP '%s' dihapus." "$2" ;;
 			cloudflare) printf 'Cloudflare' ;;
 			cloudflare_stored) printf 'Kredensial Cloudflare tersimpan ditemukan.' ;;
 			cloudflare_reuse) printf 'Gunakan token Cloudflare yang tersimpan? [Y/n]: ' ;;
@@ -138,6 +144,39 @@ ui() {
 
 ui_section() {
 	printf '\n%s\n%s\n' '────────────────────────────────────────' "$(ui "$1")"
+}
+
+# Preserve stable machine error codes while translating the human explanation at
+# the final presentation boundary. New command text should use ui() directly.
+ui_localize_message() {
+	local message="$1" suffix=''
+	ui_is_english || { printf '%s' "$message"; return; }
+	case "$message" in
+		'Vault sudah ada di '*) suffix="${message#Vault sudah ada di }"; printf 'Vault already exists at %s.' "$suffix" ;;
+		'Payload JSON tidak valid.') printf 'JSON payload is invalid.' ;;
+		'Argumen tidak dikenal: '*) suffix="${message#Argumen tidak dikenal: }"; printf 'Unknown argument: %s' "$suffix" ;;
+		'Argumen berlebih: '*) suffix="${message#Argumen berlebih: }"; printf 'Unexpected argument: %s' "$suffix" ;;
+		'Label wajib diisi, maksimal 128 karakter, tanpa karakter kontrol.') printf 'Label is required, limited to 128 characters, and cannot contain control characters.' ;;
+		'Issuer maksimal 256 karakter tanpa karakter kontrol.') printf 'Issuer is limited to 256 characters and cannot contain control characters.' ;;
+		'Account maksimal 256 karakter tanpa karakter kontrol.') printf 'Account is limited to 256 characters and cannot contain control characters.' ;;
+		'Secret harus berupa BASE32 valid dengan panjang 8 sampai 1024 karakter.') printf 'Secret must be valid BASE32 with 8 to 1024 characters.' ;;
+		'Digits harus bernilai 6 sampai 10.') printf 'Digits must be between 6 and 10.' ;;
+		'Period harus bernilai 15 sampai 90 detik.') printf 'Period must be between 15 and 90 seconds.' ;;
+		'Algoritma harus SHA1, SHA256, atau SHA512.') printf 'Algorithm must be SHA1, SHA256, or SHA512.' ;;
+		'Gunakan --yes untuk mode non-interaktif.') printf 'Use --yes in non-interactive mode.' ;;
+		'Penghapusan dibatalkan.') printf 'Deletion cancelled.' ;;
+		'Vault lokal tidak dihapus.') printf 'Local vault was not deleted.' ;;
+		'Clipboard helper tidak tersedia.') printf 'Clipboard helper is unavailable.' ;;
+		'Port harus 1024 sampai 65535.') printf 'Port must be between 1024 and 65535.' ;;
+		'Domain/subdomain tidak valid. Gunakan hostname DNS seperti sat.example.com.') printf 'Domain/subdomain is invalid. Use a DNS hostname such as sat.example.com.' ;;
+		'Binding jaringan membutuhkan token melalui prompt lokal atau SAT_WEB_TOKEN_FD.') printf 'Network binding requires a token through a local prompt or SAT_WEB_TOKEN_FD.' ;;
+		'Web server tidak siap. Periksa konflik port dan '*) suffix="${message#Web server tidak siap. Periksa konflik port dan }"; printf 'Web server is not ready. Check the port conflict and %s' "$suffix" ;;
+		'SAT Web UI tidak berjalan.') printf 'SAT Web UI is not running.' ;;
+		'SAT Web UI dihentikan.') printf 'SAT Web UI stopped.' ;;
+		'SAT Web UI belum berhenti '*) suffix="${message#SAT Web UI belum berhenti }"; printf 'SAT Web UI has not stopped %s' "$suffix" ;;
+		'Command tidak dikenal: '*) suffix="${message#Command tidak dikenal: }"; printf 'Unknown command: %s' "$suffix" ;;
+		*) printf '%s' "$message" ;;
+	esac
 }
 
 ui_parse_boolean() {
