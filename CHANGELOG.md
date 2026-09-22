@@ -4,6 +4,23 @@ All notable changes to SAT are documented here. SAT follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-09-22
+
+### Added
+
+- Run every background SAT Web UI instance through PM2 and install a user-specific systemd restore unit on first production start.
+- Add an encrypted, mode-`0600` PM2 restart credential bundle that is passed to the Web UI only through inherited file descriptors.
+- Extend English terminal feedback for common OTP, validation, and Website errors without removing the SAT ASCII banner.
+
+### Fixed
+
+- Remove failed PM2 starts from the saved process list so a port-conflict process cannot keep restarting.
+- Route PM2 stdout and stderr to the SAT Web UI log and remove persistent restart credentials when the Web UI is stopped.
+
+### Security
+
+- Verify PM2-managed Web UI processes do not expose the master password or Web UI token in argv or environment values.
+
 ## [1.3.2] - 2026-09-17
 
 ### Fixed

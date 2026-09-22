@@ -7,7 +7,7 @@
 [![GitHub top language](https://img.shields.io/github/languages/top/Silent-Protocol-Inc/Silent-Authenticator?style=flat-square)](https://github.com/Silent-Protocol-Inc/Silent-Authenticator)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=flat-square)](LICENSE)
 
-SAT is a local-first TOTP manager with an encrypted OpenSSL vault, a Bash CLI, and an optional Python web interface. Version 1.3.2 keeps the legacy `otp.vault` encryption format while separating vault policy, CLI commands, HTTP transport, and browser assets.
+SAT is a local-first TOTP manager with an encrypted OpenSSL vault, a Bash CLI, and an optional Python web interface. Version 1.4.0 keeps the legacy `otp.vault` encryption format while separating vault policy, CLI commands, HTTP transport, and browser assets.
 
 ## Project Structure
 
@@ -18,7 +18,7 @@ SAT is a local-first TOTP manager with an encrypted OpenSSL vault, a Bash CLI, a
 
 ## Requirements
 
-Install Bash, OpenSSL, jq, Python 3, `flock`, zip, and unzip. QR scanning additionally uses `zbarimg`; clipboard support is optional.
+Install Bash, OpenSSL, jq, Python 3, `flock`, zip, unzip, and PM2 for background Web UI operation. QR scanning additionally uses `zbarimg`; clipboard support is optional.
 
 Install the maintained launcher with `install -m 700 bin/sat /usr/local/bin/sat` to make this repository available as the global `sat` command. It delegates to `/home/Erpan/SAT/sat.sh`; `wantod/sat.sh` remains a legacy rollback reference.
 
@@ -55,7 +55,9 @@ SAT_HOME=/tmp/sat-dev ./sat.sh init
 ./sat.sh web-stop
 ```
 
-`web-start` meminta master password melalui prompt lokal dan baru berhasil setelah endpoint `/health` siap. Buka URL yang dicetak oleh `web-start` atau `web-status`. Jika port sedang dipakai, pilih port lain, misalnya `./sat.sh web-start --port 8788`. Gunakan `./sat.sh web` hanya bila server perlu tetap berjalan di foreground.
+`web-start` meminta master password melalui prompt lokal dan baru berhasil setelah endpoint `/health` siap. Untuk mode background, SAT menjalankan server melalui PM2, menyimpan daftar proses PM2, dan pada penggunaan pertama memasang unit systemd PM2 agar proses dipulihkan setelah reboot. Buka URL yang dicetak oleh `web-start` atau `web-status`. Jika port sedang dipakai, pilih port lain, misalnya `./sat.sh web-start --port 8788`. Gunakan `./sat.sh web` hanya bila server perlu tetap berjalan di foreground.
+
+Karena PM2 harus dapat memulai ulang SAT tanpa prompt setelah reboot, mode background menyimpan bundle restart terenkripsi di `$SAT_HOME/sat-web-restart.enc` dan kunci file-mode `0600` terpisah di `$SAT_HOME/sat-web-restart.key`. Keduanya tidak pernah dimasukkan ke argv, environment PM2, URL, atau log, dan akan dihapus oleh `web-stop`. Perlindungan ini membatasi akses ke pengguna sistem yang sama dan bukan pengganti perlindungan terhadap kompromi akun atau root.
 
 For the previous direct-from-VPS workflow, run `sat web-public`. It asks for the master password and a separate Web UI token, binds to the network, and prints the detected VPS URL. Enter that token in the browser access gate. The token stays out of argv, URLs, logs, environment values, and browser storage.
 

@@ -35,4 +35,7 @@ if command -v script >/dev/null 2>&1; then
 	rm -rf -- "$terminal_home"
 fi
 
+english_error="$(SAT_LANG=en "$SAT_PROJECT_ROOT/sat.sh" search 2>&1 || true)"
+grep -Fq 'Usage: sat.sh search <query>' <<<"$english_error"
+
 printf 'Terminal UI checks passed.\n'

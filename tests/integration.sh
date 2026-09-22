@@ -62,6 +62,9 @@ json_update() {
 
 mkdir -p "$SAT_TEST_HOME" "$SAT_TEST_TMP"
 export TMPDIR="$SAT_TEST_TMP"
+# PM2 unit installation is a host-level action. The runtime behavior remains
+# covered here, while the production command enables the unit on first start.
+export SAT_PM2_SKIP_STARTUP=yes
 
 concurrent_home="$SAT_TEST_ROOT/concurrent-home"
 mkdir -p "$concurrent_home"
@@ -194,9 +197,12 @@ lifecycle_port="$((test_port + 2))"
 SAT_HOME="$SAT_TEST_HOME" SAT_MASTER_PASS_FD=3 "$SAT_PROJECT_ROOT/sat.sh" web-start --host 127.0.0.1 --port "$lifecycle_port" 3<<<"$SAT_TEST_PASS" >/dev/null
 SAT_HOME="$SAT_TEST_HOME" "$SAT_PROJECT_ROOT/sat.sh" web-status | grep -Fq "http://127.0.0.1:$lifecycle_port"
 [[ "$(stat -c '%a' "$SAT_TEST_HOME/sat-web.state")" == '600' ]] || fail_test 'web state must use mode 600'
+[[ "$(stat -c '%a' "$SAT_TEST_HOME/sat-web-restart.enc")" == '600' ]] || fail_test 'encrypted PM2 credentials must use mode 600'
+[[ "$(stat -c '%a' "$SAT_TEST_HOME/sat-web-restart.key")" == '600' ]] || fail_test 'PM2 credential key must use mode 600'
 curl -fsS "http://127.0.0.1:$lifecycle_port/health" >/dev/null
 SAT_HOME="$SAT_TEST_HOME" "$SAT_PROJECT_ROOT/sat.sh" web-stop >/dev/null
 [[ ! -e "$SAT_TEST_HOME/sat-web.state" ]] || fail_test 'web-stop must remove web state'
+[[ ! -e "$SAT_TEST_HOME/sat-web-restart.enc" && ! -e "$SAT_TEST_HOME/sat-web-restart.key" ]] || fail_test 'web-stop must remove persistent PM2 credentials'
 set +e
 SAT_HOME="$SAT_TEST_HOME" "$SAT_PROJECT_ROOT/sat.sh" web-status >/dev/null
 lifecycle_status=$?
@@ -230,6 +236,13 @@ SAT_HOME="$SAT_TEST_HOME" "$SAT_PROJECT_ROOT/sat.sh" web-status | grep -Fq "http
 public_unauthorized_status="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:$public_port/api/list")"
 [[ "$public_unauthorized_status" == '401' ]] || fail_test 'public web mode must require a token'
 curl -fsS -H "X-SAT-Token: $test_token" "http://127.0.0.1:$public_port/api/list" >/dev/null
+pm2_server_pid="$(<"$SAT_TEST_HOME/sat-web.pid")"
+pm2_process_args="$(ps -o args= -p "$pm2_server_pid")"
+[[ "$pm2_process_args" != *"$SAT_TEST_PASS"* && "$pm2_process_args" != *"$test_token"* ]] || fail_test 'PM2 web process must not expose credentials in argv'
+if [[ -r "/proc/$pm2_server_pid/environ" ]]; then
+	! tr '\0' '\n' <"/proc/$pm2_server_pid/environ" | grep -Fq "$SAT_TEST_PASS" || fail_test 'PM2 web process must not expose password in environment'
+	! tr '\0' '\n' <"/proc/$pm2_server_pid/environ" | grep -Fq "$test_token" || fail_test 'PM2 web process must not expose token in environment'
+fi
 SAT_HOME="$SAT_TEST_HOME" "$SAT_PROJECT_ROOT/sat.sh" web-stop >/dev/null
 
 domain_port="$((test_port + 5))"
