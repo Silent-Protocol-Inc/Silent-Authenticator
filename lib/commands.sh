@@ -645,6 +645,28 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
 PY
 }
 
+web_random_local_port() {
+	# Select a high, currently unbound loopback port for the domain origin. The
+	# later availability check remains authoritative because another process can
+	# bind the port after this probe.
+	python3 - <<'PY'
+import secrets
+import socket
+
+for _ in range(128):
+    port = secrets.randbelow(40000) + 20000
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        try:
+            sock.bind(("127.0.0.1", port))
+        except OSError:
+            continue
+    print(port)
+    break
+else:
+    raise SystemExit(1)
+PY
+}
+
 nginx_bin() {
 	local candidate
 	if command -v nginx >/dev/null 2>&1; then command -v nginx; return 0; fi
@@ -993,7 +1015,7 @@ cmd_web_status() {
 
 interactive_website_menu() {
 	while :; do
-		local choice domain port uses_cloudflare proxy_mode cloudflare_mode
+		local choice domain port use_generated_port uses_cloudflare proxy_mode cloudflare_mode
 		ui_section website
 		ui website_menu; printf '\n'; ui choice
 		IFS= read -r choice || return 0
@@ -1007,12 +1029,17 @@ interactive_website_menu() {
 					validate_domain_name "$domain" && break
 					printf '%s\n' "$(ui invalid_domain)" >&2
 				done
-				while :; do
-					ui port_prompt "${SAT_WEB_PORT:-8787}"; IFS= read -r port || return 0
-					port="${port:-${SAT_WEB_PORT:-8787}}"
-					validate_port "$port" && break
-					printf '%s\n' "$(ui invalid_port)" >&2
-				done
+				ui_section origin_port
+				port="$(web_random_local_port)" || fail 8 'random_port_unavailable' 'SAT tidak dapat memilih port origin localhost yang tersedia.'
+				printf '%s\n' "$(ui generated_port "$port")"
+				use_generated_port="$(ui_confirm use_generated_port yes)" || return 0
+				if [[ "$use_generated_port" != yes ]]; then
+					while :; do
+						ui manual_port; IFS= read -r port || return 0
+						validate_port "$port" && break
+						printf '%s\n' "$(ui invalid_port)" >&2
+					done
+				fi
 				ui_section dns_configuration
 				uses_cloudflare="$(ui_confirm cloudflare_use yes)" || return 0
 				cloudflare_mode='dns-only'
