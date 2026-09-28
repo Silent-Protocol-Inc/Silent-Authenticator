@@ -252,6 +252,8 @@ select_terminal_language() {
 		*) printf '%s\n' "$(ui invalid_choice)" >&2; continue ;;
 		esac
 		save_language
+		# shellcheck disable=SC2034 # consumed by interactive_menu after this UI returns
+		SAT_LANGUAGE_CHANGED='yes'
 		return
 	done
 }
