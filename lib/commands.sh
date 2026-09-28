@@ -1058,13 +1058,17 @@ interactive_website_menu() {
 
 interactive_menu() {
 	local choice label query main_menu_rendered='no' clear_before_main_menu='no'
+	SAT_LANGUAGE_CHANGED='no'
 	print_banner
 	select_terminal_language
+	[[ "$SAT_LANGUAGE_CHANGED" != yes ]] || clear_before_main_menu='yes'
 	while :; do
 		# The initial banner is rendered before the language picker. Every later
 		# return to this root menu receives the same visual reset.
-		if [[ "$main_menu_rendered" == yes ]]; then
-			[[ "$clear_before_main_menu" != yes ]] || ui_clear_terminal
+		if [[ "$clear_before_main_menu" == yes ]]; then
+			ui_clear_terminal
+			print_banner
+		elif [[ "$main_menu_rendered" == yes ]]; then
 			print_banner
 		fi
 		clear_before_main_menu='no'
@@ -1078,7 +1082,7 @@ interactive_menu() {
 			4) ui query; IFS= read -r query; cmd_search "$query" ;;
 			5) interactive_website_menu ;;
 			6) cmd_backup ;;
-			7) print_banner; select_terminal_language yes; clear_before_main_menu='yes' ;;
+			7) print_banner; SAT_LANGUAGE_CHANGED='no'; select_terminal_language yes; [[ "$SAT_LANGUAGE_CHANGED" != yes ]] || clear_before_main_menu='yes' ;;
 			0) return ;;
 			*) printf '%s\n' "$(ui unknown_choice)" ;;
 		esac
