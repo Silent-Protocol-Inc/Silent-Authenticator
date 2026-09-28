@@ -28,10 +28,11 @@ load_saved_language
 
 if command -v script >/dev/null 2>&1; then
 	terminal_home="$(mktemp -d "${TMPDIR:-/tmp}/sat-ui-pty.XXXXXX")"
-	printf '1\n0\n' | SAT_HOME="$terminal_home" script -qec "'$SAT_PROJECT_ROOT/sat.sh' menu" /dev/null >"$terminal_home/output"
+	printf '1\n7\n2\n0\n' | SAT_HOME="$terminal_home" script -qec "'$SAT_PROJECT_ROOT/sat.sh' menu" /dev/null >"$terminal_home/output"
 	grep -Fq 'Choose your language / Pilih bahasa' "$terminal_home/output"
-	grep -Fq '1) List OTP entries' "$terminal_home/output"
-	grep -Fqx 'language=en' "$terminal_home/config"
+	grep -Fq '1) Daftar entri OTP' "$terminal_home/output"
+	[[ "$(grep -Fc 'Silent Authenticator Tool (SAT)' "$terminal_home/output")" -ge 3 ]]
+	grep -Fqx 'language=id' "$terminal_home/config"
 	rm -rf -- "$terminal_home"
 fi
 

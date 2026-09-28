@@ -331,6 +331,7 @@ jq -e '.error == "cloudflare_dns_required"' <<<"$invalid_cloudflare_dns_error" >
 menu_output="$(printf '5\n0\n0\n' | SAT_HOME="$SAT_TEST_HOME" "$SAT_PROJECT_ROOT/sat.sh" menu)"
 grep -Fq 'Silent Authenticator Tool (SAT)' <<<"$menu_output" || fail_test 'interactive menu must render the SAT ASCII banner'
 grep -Fq "v$SAT_EXPECTED_VERSION  © 2026 SilentProtocol. Licensed under Apache-2.0." <<<"$menu_output" || fail_test 'interactive menu must render the release version, copyright year, and license'
+[[ "$(grep -Fc 'Silent Authenticator Tool (SAT)' <<<"$menu_output")" -eq 2 ]] || fail_test 'returning from Website must render the SAT ASCII banner again'
 grep -Fq $'1) Daftar entri OTP\n2) Tambah OTP\n3) Hasilkan kode OTP' <<<"$menu_output" || fail_test 'interactive CLI menu must render vertically in Indonesian'
 grep -Fq '7) Bahasa' <<<"$menu_output" || fail_test 'interactive CLI menu must provide language settings'
 grep -Fq 'Global VPS / IP' <<<"$menu_output" || fail_test 'website submenu must include global VPS/IP mode'
