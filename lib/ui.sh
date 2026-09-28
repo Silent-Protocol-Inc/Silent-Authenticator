@@ -234,6 +234,12 @@ save_language() {
 	chmod 600 -- "$SAT_CONFIG_FILE"
 }
 
+ui_clear_terminal() {
+	# Do not emit terminal controls into redirected output or automation logs.
+	[[ -t 1 ]] || return 0
+	printf '\033[2J\033[H'
+}
+
 select_terminal_language() {
 	local force="${1:-no}" choice
 	[[ "$force" == yes || "$SAT_LANG_EXPLICIT" == no ]] || return 0
