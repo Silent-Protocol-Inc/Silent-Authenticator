@@ -1057,10 +1057,14 @@ interactive_website_menu() {
 }
 
 interactive_menu() {
-	select_terminal_language
+	local choice label query main_menu_rendered='no'
 	print_banner
+	select_terminal_language
 	while :; do
-		local choice label query
+		# The initial banner is rendered before the language picker. Every later
+		# return to this root menu receives the same visual reset.
+		if [[ "$main_menu_rendered" == yes ]]; then print_banner; fi
+		main_menu_rendered='yes'
 		printf '\nSAT %s\n' "$APP_VERSION"; ui main_menu; printf '\n'; ui choice
 		IFS= read -r choice || return 0
 		case "$choice" in
@@ -1070,7 +1074,7 @@ interactive_menu() {
 			4) ui query; IFS= read -r query; cmd_search "$query" ;;
 			5) interactive_website_menu ;;
 			6) cmd_backup ;;
-			7) select_terminal_language yes ;;
+			7) print_banner; select_terminal_language yes ;;
 			0) return ;;
 			*) printf '%s\n' "$(ui unknown_choice)" ;;
 		esac
