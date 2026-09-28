@@ -233,9 +233,11 @@ save_language() {
 }
 
 ui_clear_terminal() {
-	# Do not emit terminal controls into redirected output or automation logs.
+	# Clear the visible screen and saved scrollback so a partial old banner cannot
+	# remain above the freshly redrawn localized menu. Do not emit controls into
+	# redirected output or automation logs.
 	[[ -t 1 ]] || return 0
-	printf '\033[2J\033[H'
+	printf '\033[3J\033[2J\033[H'
 }
 
 select_terminal_language() {

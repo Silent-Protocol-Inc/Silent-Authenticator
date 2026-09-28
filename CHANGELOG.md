@@ -4,6 +4,12 @@ All notable changes to SAT are documented here. SAT follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.4.7] - 2026-09-28
+
+### Fixed
+
+- Preserve the existing interactive banner flow while clearing stale terminal scrollback before the localized SAT ASCII banner is redrawn.
+
 ## [1.4.6] - 2026-09-28
 
 ### Fixed
