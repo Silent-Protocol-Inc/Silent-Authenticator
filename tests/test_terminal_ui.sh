@@ -31,7 +31,7 @@ if command -v script >/dev/null 2>&1; then
 	printf '1\n7\n2\n0\n' | SAT_HOME="$terminal_home" script -qec "'$SAT_PROJECT_ROOT/sat.sh' menu" /dev/null >"$terminal_home/output"
 	grep -Fq 'Choose your language / Pilih bahasa' "$terminal_home/output"
 	grep -Fq '1) Daftar entri OTP' "$terminal_home/output"
-	[[ "$(grep -Fc 'Silent Authenticator Tool (SAT)' "$terminal_home/output")" -ge 3 ]]
+	[[ "$(grep -Fc 'Silent Authenticator Tool (SAT)' "$terminal_home/output")" -eq 2 ]]
 	[[ "$(grep -Fc $'\033[2J\033[H' "$terminal_home/output")" -ge 2 ]]
 	! grep -Fq 'Preferensi bahasa disimpan.' "$terminal_home/output"
 	grep -Fqx 'language=id' "$terminal_home/config"
