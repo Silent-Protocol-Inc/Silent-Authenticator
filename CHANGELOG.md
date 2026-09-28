@@ -4,6 +4,12 @@ All notable changes to SAT are documented here. SAT follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.4.4] - 2026-09-28
+
+### Fixed
+
+- Remove the transient language-saved message so language selection transitions directly to the cleared terminal, ASCII banner, and localized main menu.
+
 ## [1.4.3] - 2026-09-28
 
 ### Fixed
