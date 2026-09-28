@@ -12,7 +12,6 @@ ui() {
 	if ui_is_english; then
 		case "$key" in
 			language_choice) printf 'Choose your language / Pilih bahasa\n\n  1) English\n  2) Bahasa Indonesia\n\nSelect / Pilih [1-2]: ' ;;
-			language_saved) printf 'Language preference saved.' ;;
 			invalid_choice) printf 'Please choose a listed option.' ;;
 			main_menu) printf '1) List OTP entries\n2) Add OTP entry\n3) Generate OTP code\n4) Search OTP entries\n5) Website\n6) Backup\n7) Language\n0) Exit' ;;
 			website_menu) printf '1) Global VPS / IP\n2) Domain / subdomain with HTTPS\n3) Status\n4) Stop\n0) Back' ;;
@@ -81,7 +80,6 @@ ui() {
 	else
 		case "$key" in
 			language_choice) printf 'Choose your language / Pilih bahasa\n\n  1) English\n  2) Bahasa Indonesia\n\nSelect / Pilih [1-2]: ' ;;
-			language_saved) printf 'Preferensi bahasa disimpan.' ;;
 			invalid_choice) printf 'Pilih opsi yang tersedia.' ;;
 			main_menu) printf '1) Daftar entri OTP\n2) Tambah OTP\n3) Hasilkan kode OTP\n4) Cari entri OTP\n5) Website\n6) Backup\n7) Bahasa\n0) Keluar' ;;
 			website_menu) printf '1) Global VPS / IP\n2) Domain / subdomain dengan HTTPS\n3) Status\n4) Stop\n0) Kembali' ;;
@@ -251,10 +249,9 @@ select_terminal_language() {
 		case "$choice" in
 			1|en|EN) SAT_LANG='en' ;;
 			2|id|ID) SAT_LANG='id' ;;
-			*) printf '%s\n' "$(ui invalid_choice)" >&2; continue ;;
+		*) printf '%s\n' "$(ui invalid_choice)" >&2; continue ;;
 		esac
 		save_language
-		printf '%s\n' "$(ui language_saved)"
 		return
 	done
 }

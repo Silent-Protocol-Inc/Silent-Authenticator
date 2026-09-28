@@ -33,6 +33,7 @@ if command -v script >/dev/null 2>&1; then
 	grep -Fq '1) Daftar entri OTP' "$terminal_home/output"
 	[[ "$(grep -Fc 'Silent Authenticator Tool (SAT)' "$terminal_home/output")" -ge 3 ]]
 	grep -Fq $'\033[2J\033[H' "$terminal_home/output"
+	! grep -Fq 'Preferensi bahasa disimpan.' "$terminal_home/output"
 	grep -Fqx 'language=id' "$terminal_home/config"
 	rm -rf -- "$terminal_home"
 fi
