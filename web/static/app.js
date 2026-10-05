@@ -34,7 +34,7 @@ const copy = {
 };
 
 const elements = Object.fromEntries([
-  "accessGate", "accessForm", "tokenInput", "tokenVisibilityButton", "connectButton", "searchInput", "addButton", "emptyAddButton", "themeButton", "themePanel", "themeGrid", "closeThemePanel", "systemThemeButton", "languageSelect", "languageSelectToolbar", "totalCount", "visibleCount", "syncTime",
+  "accessGate", "accessForm", "tokenInput", "tokenVisibilityButton", "connectButton", "searchInput", "addButton", "emptyAddButton", "themeButton", "themePanel", "themeGrid", "closeThemePanel", "systemThemeButton", "languageSelect", "totalCount", "visibleCount", "syncTime",
   "editor", "editorMode", "editorTitle", "closeEditor", "entryForm", "currentLabel", "labelInput", "issuerInput", "accountInput", "secretInput", "digitsInput",
   "periodInput", "algorithmInput", "qrInput", "scanButton", "refreshButton", "statePanel", "stateTitle", "stateMessage", "otpGrid", "otpTemplate", "deleteDialog",
   "deleteDescription", "confirmDelete", "toast"
@@ -139,7 +139,6 @@ function applyPreferences() {
   document.documentElement.dataset.layout = activeAppearance().layout;
   document.documentElement.dataset.themePreference = theme;
   elements.languageSelect.value = language;
-  elements.languageSelectToolbar.value = language;
   document.querySelectorAll("[data-i18n]").forEach((node) => { node.textContent = text(node.dataset.i18n); });
   document.querySelectorAll("[data-i18n-aria]").forEach((node) => { node.setAttribute("aria-label", text(node.dataset.i18nAria)); });
   renderThemePicker();
@@ -404,7 +403,6 @@ elements.tokenVisibilityButton.addEventListener("click", () => {
 });
 function changeLanguage(value) { language = value; localStorage.setItem("sat-language", language); applyPreferences(); }
 elements.languageSelect.addEventListener("change", () => changeLanguage(elements.languageSelect.value));
-elements.languageSelectToolbar.addEventListener("change", () => changeLanguage(elements.languageSelectToolbar.value));
 elements.deleteDialog.addEventListener("close", async () => {
   if (elements.deleteDialog.returnValue !== "confirm" || !pendingDelete) { pendingDelete = ""; return; }
   const result = await api("/api/delete", { method: "POST", body: JSON.stringify({ label: pendingDelete }) });

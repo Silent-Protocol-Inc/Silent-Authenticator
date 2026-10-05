@@ -4,6 +4,19 @@ All notable changes to SAT are documented here. SAT follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.4.8] - 2026-10-05
+
+### Changed
+
+- Rebuilt the Web UI layout into a more compact, enterprise-oriented workspace with aligned controls, metric cells, vault surfaces, and responsive action bars.
+- Stabilized every appearance layout so theme-specific composition does not compromise mobile, tablet, or desktop geometry.
+- Consolidated language selection in the header and removed the duplicate toolbar control.
+
+### Fixed
+
+- Prevented the mobile search field from inheriting a desktop-height flex basis.
+- Made Web UI static assets relative so local/static previews resolve reliably.
+
 ## [1.4.7] - 2026-09-28
 
 ### Fixed
