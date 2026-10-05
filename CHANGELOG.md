@@ -4,6 +4,13 @@ All notable changes to SAT are documented here. SAT follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.4.9] - 2026-10-05
+
+### Fixed
+
+- Keep metrics and command controls full-width in narrow desktop layout variants, preventing compressed cells and visual collisions.
+- Reflow the access panel into one column when Security or Console places it in a narrow side workspace.
+
 ## [1.4.8] - 2026-10-05
 
 ### Changed
