@@ -6,7 +6,7 @@ SAT is a local security instrument: codes remain quiet and hidden until the oper
 
 ## System
 
-The interface uses semantic `--sat-*` tokens for spacing, control sizing, surfaces, borders, focus, motion, and z-index. Ten appearance modes share the same accessible components and data flow while selecting a controlled layout adapter: executive, top navigation, focused, briefing, office, ledger, console, security, layered, or editorial. A theme may alter visual density, typography treatment, surfaces, and navigation composition; it must not alter security behavior or control geometry unexpectedly.
+The interface uses semantic `--sat-*` tokens for spacing, control sizing, surfaces, borders, focus, motion, and z-index. Ten appearance modes share the same accessible components and data flow while selecting a controlled navigation adapter: executive, top navigation, focused, briefing, office, ledger, console, security, layered, or editorial. A theme may alter visual density, typography treatment, surfaces, and navigation position; it must not squeeze or reorder the primary workspace unexpectedly.
 
 Three type roles are fixed: Georgia/system serif for display, the operating-system sans stack for reading, and the system monospace stack for labels, identifiers, countdowns, and codes. Changing numbers use tabular figures. The selected appearance is stored only as `sat.theme`; vault tokens and OTP data never persist in browser storage.
 
@@ -24,7 +24,7 @@ The mobile layout replaces the multi-column grid with one card per row. Every co
 
 ## Layout and Component States
 
-The shell uses shared container and spacing tokens. At compact widths every layout adapter returns to one normal-flow column; fixed positioning is reserved for the executive navigation, theme picker, toast, and decorative layers. Toolbars wrap, grids use `minmax(0, …)`, and dialogs scroll internally within the safe viewport.
+The shell uses shared container and spacing tokens. The primary workspace always remains one normal-flow column; only wide workstations receive a fixed left or right navigation rail for designated appearances. At compact widths every appearance returns to a horizontal navigation strip. Toolbars wrap, grids use `minmax(0, …)`, and dialogs scroll internally within the safe viewport.
 
 The vault region defines loading, empty, ready, unauthorized, offline, and error states at one footprint. OTP cards define hidden and visible values; hidden is the default. Add/edit forms distinguish create and update, and destructive actions use a modal confirmation that returns focus through the native dialog contract.
 
