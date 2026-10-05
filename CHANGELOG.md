@@ -4,6 +4,17 @@ All notable changes to SAT are documented here. SAT follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-05
+
+### Changed
+
+- Rebuilt appearance composition around one stable workspace flow and theme-specific navigation placements: left rail, right rail, centered top bar, floating bar, and office strip.
+- Keep side navigation for wide workstations only; tablet and mobile consistently return to a horizontal navigation strip.
+
+### Fixed
+
+- Removed the multi-column workspace rules that caused uneven page rhythm and crowded theme-specific layouts.
+
 ## [1.4.9] - 2026-10-05
 
 ### Fixed
