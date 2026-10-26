@@ -4,6 +4,23 @@ All notable changes to SAT are documented here. SAT follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-10-26
+
+### Added
+
+- Added a native, keyboard-navigable appearance gallery for all ten SAT workspace themes, with structural previews, descriptions, and active-state feedback.
+
+### Changed
+
+- Reframed the Web UI as a unified authenticator workspace with explicit encrypted-local storage and session context, aligned vault operations, and clearer responsive compositions.
+- Improved OTP-card identity, protected/visible state labels, accessible action names, and current-section navigation feedback.
+
+### Fixed
+
+- Distinguish the initial locked workspace from a rejected access token, keeping vault controls unavailable until the connection succeeds.
+- Stabilized responsive workspace controls and display hierarchy across the supported appearance layouts.
+- Prevented normal CLI commands from exiting when their optional arguments do not include `--json`.
+
 ## [1.5.0] - 2026-10-05
 
 ### Changed

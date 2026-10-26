@@ -5,6 +5,7 @@ set_json_output_if_requested() {
 	for arg in "$@"; do
 		[[ "$arg" == '--json' ]] && SAT_OUTPUT='json'
 	done
+	return 0
 }
 
 print_banner() {
