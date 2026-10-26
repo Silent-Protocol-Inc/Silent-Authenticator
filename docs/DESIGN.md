@@ -14,19 +14,19 @@ All authoritative visual values live in `web/static/styles.css`. Silent Obsidian
 
 | Pair | Dark | Light |
 | --- | ---: | ---: |
-| Primary text / ground | 16.91:1 | 14.74:1 |
-| Muted text / ground | 9.19:1 | 6.12:1 |
-| Control text / control | 12.03:1 | 6.41:1 |
-| Report value / ground | 10.96:1 | 7.03:1 |
-| Rule / surface | 4.25:1 | 4.75:1 |
+| Primary text / ground | 16.52:1 | 14.03:1 |
+| Muted text / ground | 7.65:1 | 5.44:1 |
+| Control text / control | 8.24:1 | 5.94:1 |
+| Report value / ground | 10.25:1 | 6.47:1 |
+| Rule / surface | 3.36:1 | 3.52:1 |
 
-The mobile layout replaces the multi-column grid with one card per row. Every control is at least 44px high. Focus is explicit, status never relies on color alone, and reduced-motion and forced-colors preferences receive dedicated rules.
+The mobile layout replaces the multi-column grid with one card per row and turns section navigation into a two-by-two grid on the narrowest screens. Every control is at least 44px high. Focus is explicit, status never relies on color alone, and reduced-motion and forced-colors preferences receive dedicated rules. The appearance gallery uses a native dialog: it traps focus, restores it to its invoker, supports arrow-key movement through its radio choices, and gives every appearance a structural preview, category, description, and explicit active state.
 
 ## Layout and Component States
 
-The shell uses shared container and spacing tokens. The primary workspace always remains one normal-flow column; only wide workstations receive a fixed left or right navigation rail for designated appearances. At compact widths every appearance returns to a horizontal navigation strip. Toolbars wrap, grids use `minmax(0, …)`, and dialogs scroll internally within the safe viewport.
+The shell uses shared container and spacing tokens. The masthead is a compact application bar rather than a promotional hero. A single workspace frame now groups session context, access, operations, editor, and vault content with one outer boundary and deliberate internal separators. The context header reports local encrypted storage and the actual locked/connected session state. Search/action controls and the four metrics live inside one named operations panel; they share a row when enough width exists and return to normal-flow stacking before either side becomes cramped. Search and Add OTP share a baseline on tablet and desktop. Only wide workstations receive a left or right navigation rail through an AppShell grid, so the rail reserves space instead of covering content. Focused and layered modes separate the frame into individual work surfaces; briefing and security modes use tested wide-screen summary/workspace splits; editorial mode turns context into a permanent typographic margin. Toolbars wrap, grids use `minmax(0, …)`, and dialogs scroll internally within the safe viewport.
 
-The vault region defines loading, empty, ready, unauthorized, offline, and error states at one footprint. OTP cards define hidden and visible values; hidden is the default. Add/edit forms distinguish create and update, and destructive actions use a modal confirmation that returns focus through the native dialog contract.
+The vault region defines locked, loading, empty, ready, unauthorized, offline, and error states at one footprint. The first unauthenticated request reports a neutral locked state; only a submitted bad token reports an authorization error. Search, reload, and entry creation remain unavailable until the vault connection succeeds. OTP cards define hidden and visible values; hidden is the default, each card carries a generated issuer monogram and explicit protected/active label, timers expose an accessible expiry value, and card actions name the affected entry. One or two entries use balanced grid compositions while larger vaults return to the responsive auto-fill grid. Add/edit forms distinguish create and update, and destructive actions use a modal confirmation that returns focus through the native dialog contract.
 
 ## Honest Note
 
