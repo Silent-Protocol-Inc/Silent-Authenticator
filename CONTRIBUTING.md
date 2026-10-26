@@ -13,6 +13,7 @@ python3 -m py_compile lib/totp.py web/server.py
 python3 tests/test_totp.py
 python3 tests/test_server.py
 python3 tests/verify_design.py
+python3 tests/verify_repository_hygiene.py
 ./tests/integration.sh
 ./tests/load_400.sh
 ```
@@ -20,6 +21,8 @@ python3 tests/verify_design.py
 ## Commits and Pull Requests
 
 Use Conventional Commit subjects, for example `fix(web): isolate hostname routing` or `docs: clarify vault recovery`. Describe behavior, security impact, tests run, and rollback considerations. Include responsive screenshots for visual changes.
+
+Do not commit vaults, keys, certificates, tokens, runtime state, backups, logs, or legacy rollback folders. CI rejects these tracked paths even if a local ignore rule is bypassed.
 
 ## Releases
 

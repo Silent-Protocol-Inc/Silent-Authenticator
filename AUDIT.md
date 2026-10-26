@@ -2,7 +2,7 @@
 
 ## Scope
 
-Audited the complete active SAT tree: Bash entry point and modules, Python TOTP and HTTP transport, static web UI, tests, documentation, launcher, and ADR. Legacy `wantod/` and root encrypted/offline material were intentionally not opened, per repository policy.
+Audited the complete active SAT tree: Bash entry point and modules, Python TOTP and HTTP transport, static web UI, tests, documentation, launcher, and ADR. Root encrypted/offline material was intentionally not opened, per repository policy.
 
 ## Findings repaired
 
