@@ -7,7 +7,7 @@
 - `web/server.py` is a thin HTTP transport: it spawns `sat.sh` via `run_cli` and maps the CLI exit code to an HTTP status. Vault policy stays in Bash; never move decisions into Python.
 - `web/static/index.html` carries an inline theme-bootstrap `<script>`; `app.js`/`styles.css` are external.
 - `tests/` has disposable checks; `docs/` records security, design, and migration contracts; `decisions/ADR-001` explains the security-boundary split.
-- This working copy is NOT a git checkout (no `.git`). Root `*.gpg`, `spm_recovery_private.pem`, and `wantod/` are legacy/offline material; treat them as unreadable bytes—never open or test against them.
+- This working copy is NOT a git checkout (no `.git`). Root `*.gpg` and `spm_recovery_private.pem` are legacy/offline material; treat them as unreadable bytes—never open or test against them.
 
 ## Build, Test, and Development Commands
 

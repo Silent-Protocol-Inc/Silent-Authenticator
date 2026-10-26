@@ -20,7 +20,7 @@ SAT is a local-first TOTP manager with an encrypted OpenSSL vault, a Bash CLI, a
 
 Install Bash, OpenSSL, jq, Python 3, `flock`, zip, unzip, and PM2 for background Web UI operation. QR scanning additionally uses `zbarimg`; clipboard support is optional.
 
-Install the maintained launcher with `install -m 700 bin/sat /usr/local/bin/sat` to make this repository available as the global `sat` command. It delegates to `/home/Erpan/SAT/sat.sh`; `wantod/sat.sh` remains a legacy rollback reference.
+Install the maintained launcher with `install -m 700 bin/sat /usr/local/bin/sat` to make this repository available as the global `sat` command. It delegates to `/home/Erpan/SAT/sat.sh`.
 
 ```bash
 chmod +x sat.sh
@@ -120,6 +120,7 @@ python3 tests/test_server.py
 ./tests/load_400.sh
 python3 tests/test_totp.py
 python3 tests/verify_design.py
+python3 tests/verify_repository_hygiene.py
 ```
 
 See [docs/SECURITY.md](docs/SECURITY.md), [docs/DESIGN.md](docs/DESIGN.md), and [docs/MIGRATION_V2.md](docs/MIGRATION_V2.md) for the operating contracts and known limitations.

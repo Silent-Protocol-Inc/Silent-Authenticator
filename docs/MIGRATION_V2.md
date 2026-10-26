@@ -22,8 +22,8 @@ Process arguments, URLs, logs, and persistent browser storage are inappropriate 
 
 ## Compatibility Window
 
-The encrypted `otp.vault` format and primary command names remain compatible throughout SAT 2.x. Legacy scripts remain in `wantod/` as rollback references but receive no fixes.
+The encrypted `otp.vault` format and primary command names remain compatible throughout SAT 2.x. Legacy rollback scripts have been removed from the repository and must never be committed with vault material.
 
 ## Verification and Rollback
 
-Run `./tests/integration.sh`, then point `SAT_HOME` at a copy of the real runtime and verify `list`, `code`, `backup`, and web startup. Roll back by invoking `wantod/sat.sh` against the unchanged vault format. Do not overwrite the v2 source with the legacy copy.
+Run `./tests/integration.sh`, then point `SAT_HOME` at a copy of the real runtime and verify `list`, `code`, `backup`, and web startup. If a rollback is required, use a prior reviewed Git tag or release against an unchanged copy of the vault; do not restore legacy scripts or vault material into this repository.

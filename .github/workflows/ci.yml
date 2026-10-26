@@ -35,5 +35,6 @@ jobs:
           ./tests/test_terminal_ui.sh
           python3 tests/test_server.py
           python3 tests/verify_design.py
+          python3 tests/verify_repository_hygiene.py
           ./tests/integration.sh
           ./tests/load_400.sh
