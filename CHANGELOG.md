@@ -4,6 +4,13 @@ All notable changes to SAT are documented here. SAT follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.6.1] - 2026-10-26
+
+### Security
+
+- Removed the legacy `wantod/` rollback scripts from the repository's active source tree.
+- Added a CI repository-hygiene gate that rejects legacy rollback paths, vaults, keys, certificates, credentials, runtime state, backups, logs, and release archives if they are tracked.
+
 ## [1.6.0] - 2026-10-26
 
 ### Added
