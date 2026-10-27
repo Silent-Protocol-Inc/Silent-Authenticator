@@ -4,7 +4,7 @@ const copy = {
   id: {
     skip: "Lewati ke konten", instrumentLabel: "SAT–02 · INSTRUMEN KEAMANAN LOKAL", argument: "Kode penting tetap lokal, terlihat hanya ketika dibutuhkan.", accessEyebrow: "AKSES DIBUTUHKAN",
     accessTitle: "Hubungkan ke vault", accessHelp: "Token hanya disimpan dalam memori tab ini dan hilang saat halaman ditutup.", tokenLabel: "Token akses",
-    connect: "Hubungkan", controls: "Kontrol vault", search: "Cari akun", add: "Tambah OTP", appearance: "Tampilan", appearanceHelp: "Pilih lingkungan kerja tanpa mengubah data atau keamanan vault.", personalize: "PERSONALISASI WORKSPACE", active: "Aktif", language: "Bahasa", localOnly: "Lokal saja", vaultDisconnected: "Vault · Terputus", showToken: "Tampilkan", hideToken: "Sembunyikan", systemAppearance: "Gunakan tampilan sistem", systemAppearanceHelp: "Gelap: Silent Obsidian · Terang: Arctic Frost", navLabel: "SAT / NAVIGASI", navLocal: "Vault lokal · Privat", navWorkspace: "Workspace", navMetrics: "Status", navVault: "Vault", navSecurity: "Keamanan",
+    connect: "Hubungkan", controls: "Kontrol vault", search: "Cari akun", add: "Tambah OTP", appearance: "Tampilan", appearanceHelp: "Pilih ground Signal tanpa mengubah data atau keamanan vault.", personalize: "PREFERENSI SIGNAL", active: "Aktif", language: "Bahasa", localOnly: "Lokal saja", vaultDisconnected: "Vault · Terputus", showToken: "Tampilkan", hideToken: "Sembunyikan", systemAppearance: "Ikuti tampilan perangkat", systemAppearanceHelp: "Signal gelap atau terang mengikuti sistem", navLabel: "SAT / NAVIGASI", navLocal: "Vault lokal · Privat", navWorkspace: "Workspace", navMetrics: "Status", navVault: "Vault", navSecurity: "Keamanan",
     workspaceContextEyebrow: "WORKSPACE AMAN", workspaceContextTitle: "Pusat kendali authenticator", storageLabel: "Penyimpanan", storageValue: "Terenkripsi lokal", sessionLabel: "Sesi", sessionLocked: "Terkunci", sessionConnected: "Terhubung",
     workspaceEyebrow: "OPERASI VAULT", workspaceTitle: "Workspace authenticator", workspaceHelp: "Temukan akun, tambah entri, dan pantau keadaan vault dari satu tempat.",
     statusLabel: "Status vault", total: "Total", visible: "Terlihat", sync: "Sinkron", privacy: "Privasi", privacyValue: "Tersembunyi",
@@ -22,7 +22,7 @@ const copy = {
   en: {
     skip: "Skip to content", instrumentLabel: "SAT–02 · LOCAL SECURITY INSTRUMENT", argument: "Important codes stay local and appear only when needed.", accessEyebrow: "ACCESS REQUIRED", accessTitle: "Connect to the vault",
     accessHelp: "The token stays in this tab's memory and disappears when the page closes.", tokenLabel: "Access token", connect: "Connect", controls: "Vault controls",
-    search: "Search accounts", add: "Add OTP", appearance: "Appearance", appearanceHelp: "Choose a workspace without changing vault data or security.", personalize: "PERSONALIZE WORKSPACE", active: "Active", language: "Language", localOnly: "Local only", vaultDisconnected: "Vault · Disconnected", showToken: "Show", hideToken: "Hide", systemAppearance: "Use system appearance", systemAppearanceHelp: "Dark: Silent Obsidian · Light: Arctic Frost", navLabel: "SAT / NAVIGATION", navLocal: "Local vault · Private", navWorkspace: "Workspace", navMetrics: "Status", navVault: "Vault", navSecurity: "Security", workspaceContextEyebrow: "SECURE WORKSPACE", workspaceContextTitle: "Authenticator control center", storageLabel: "Storage", storageValue: "Encrypted locally", sessionLabel: "Session", sessionLocked: "Locked", sessionConnected: "Connected", workspaceEyebrow: "VAULT OPERATIONS", workspaceTitle: "Authenticator workspace", workspaceHelp: "Find accounts, add entries, and monitor vault state in one place.", statusLabel: "Vault status", total: "Total",
+    search: "Search accounts", add: "Add OTP", appearance: "Appearance", appearanceHelp: "Choose a Signal ground without changing vault data or security.", personalize: "SIGNAL PREFERENCE", active: "Active", language: "Language", localOnly: "Local only", vaultDisconnected: "Vault · Disconnected", showToken: "Show", hideToken: "Hide", systemAppearance: "Follow device appearance", systemAppearanceHelp: "Signal dark or light follows the system", navLabel: "SAT / NAVIGATION", navLocal: "Local vault · Private", navWorkspace: "Workspace", navMetrics: "Status", navVault: "Vault", navSecurity: "Security", workspaceContextEyebrow: "SECURE WORKSPACE", workspaceContextTitle: "Authenticator control center", storageLabel: "Storage", storageValue: "Encrypted locally", sessionLabel: "Session", sessionLocked: "Locked", sessionConnected: "Connected", workspaceEyebrow: "VAULT OPERATIONS", workspaceTitle: "Authenticator workspace", workspaceHelp: "Find accounts, add entries, and monitor vault state in one place.", statusLabel: "Vault status", total: "Total",
     visible: "Visible", sync: "Synced", privacy: "Privacy", privacyValue: "Hidden", newEntry: "NEW ENTRY", editEntry: "EDIT ENTRY", editorTitle: "Add authenticator",
     editorEditTitle: "Update authenticator", close: "Close", label: "Label", issuer: "Issuer", account: "Account", secret: "BASE32 secret", digits: "Digits",
     period: "Period", algorithm: "Algorithm", qr: "OTP QR (PNG/JPG/GIF/WebP, max 1 MB)", qrChooseFile: "Choose a QR file first.", qrTooLarge: "QR files must be 1 MB or smaller.", save: "Save", scan: "Read QR", vaultEyebrow: "ENCRYPTED VAULT",
@@ -44,16 +44,8 @@ const elements = Object.fromEntries([
 ].map((id) => [id, document.getElementById(id)]));
 
 const themes = [
-  ["silent-obsidian", "Silent Obsidian", "executive", "Gelap · Eksekutif", "Dark · Executive", "Workspace utama SAT yang tenang dan presisi.", "SAT's quiet, precise primary workspace."],
-  ["cyber-teal", "Cyber Teal", "topnav", "Gelap · Operasional", "Dark · Operations", "Kontrol teknis dengan navigasi horizontal.", "Technical controls with horizontal navigation."],
-  ["midnight-indigo", "Midnight Indigo", "focused", "Gelap · Fokus", "Dark · Focused", "Kanvas terpusat untuk sesi kerja panjang.", "A centered canvas for long work sessions."],
-  ["graphite-gold", "Graphite Gold", "briefing", "Gelap · Briefing", "Dark · Briefing", "Komposisi eksekutif dengan rail di kanan.", "An executive composition with a right rail."],
-  ["arctic-frost", "Arctic Frost", "office", "Terang · Korporat", "Light · Corporate", "Ruang kerja terang dengan batas yang tegas.", "A bright workspace with crisp boundaries."],
-  ["paper-terminal", "Paper Terminal", "ledger", "Terang · Ledger", "Light · Ledger", "Catatan teknis yang hangat dan terstruktur.", "A warm, structured technical ledger."],
-  ["matrix-terminal", "Matrix Terminal", "console", "Gelap · Konsol", "Dark · Console", "Antarmuka terminal profesional dengan noise rendah.", "A professional, low-noise terminal interface."],
-  ["crimson-security", "Crimson Security", "security", "Gelap · Keamanan", "Dark · Security", "Workspace pengawasan dengan prioritas status.", "A status-first security supervision workspace."],
-  ["aurora-glass", "Aurora Glass", "layered", "Gelap · Berlapis", "Dark · Layered", "Kedalaman selektif untuk workspace modern.", "Selective depth for a modern workspace."],
-  ["monochrome-zero", "Monochrome Zero", "editorial", "Gelap · Minimal", "Dark · Minimal", "Hierarki murni melalui tipe, garis, dan ruang.", "Pure hierarchy through type, rules, and space."]
+  ["signal-dark", "Signal Dark", "instrument", "Gelap · Instrumen", "Dark · Instrument", "Panel rendah cahaya untuk operasi vault yang fokus.", "A low-light panel for focused vault operations."],
+  ["signal-light", "Signal Light", "instrument", "Terang · Instrumen", "Light · Instrument", "Panel terang untuk kondisi siang dan ruang kerja cerah.", "A bright panel for daylight and bright workspaces."]
 ].map(([id, name, layout, categoryId, categoryEn, descriptionId, descriptionEn]) => ({ id, name, layout, category: { id: categoryId, en: categoryEn }, description: { id: descriptionId, en: descriptionEn } }));
 const themeIds = new Set(themes.map(({ id }) => id));
 let language = localStorage.getItem("sat-language") === "en" ? "en" : "id";
@@ -78,7 +70,7 @@ function storedTheme() {
   if (saved === "system" || themeIds.has(saved)) return saved;
   const legacy = localStorage.getItem("sat-theme");
   if (legacy === "light" || legacy === "dark") {
-    const migrated = legacy === "light" ? "arctic-frost" : "silent-obsidian";
+    const migrated = legacy === "light" ? "signal-light" : "signal-dark";
     localStorage.setItem("sat.theme", migrated);
     localStorage.removeItem("sat-theme");
     return migrated;
@@ -86,8 +78,12 @@ function storedTheme() {
   return "system";
 }
 
-function resolvedTheme() { return theme === "system" ? (window.matchMedia("(prefers-color-scheme: light)").matches ? "arctic-frost" : "silent-obsidian") : theme; }
+function resolvedTheme() { return theme === "system" ? (window.matchMedia("(prefers-color-scheme: light)").matches ? "signal-light" : "signal-dark") : theme; }
 function activeAppearance() { return themes.find((item) => item.id === resolvedTheme()) || themes[0]; }
+function updateThemeChrome() {
+  const color = resolvedTheme() === "signal-light" ? "#F4F7F6" : "#0D1315";
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", color);
+}
 
 function renderThemePicker() {
   elements.themeGrid.replaceChildren();
@@ -135,6 +131,7 @@ function setTheme(nextTheme) {
   document.documentElement.dataset.theme = resolvedTheme();
   document.documentElement.dataset.layout = activeAppearance().layout;
   document.documentElement.dataset.themePreference = theme;
+  updateThemeChrome();
   renderThemePicker();
   if (elements.themePanel.open) window.requestAnimationFrame(() => elements.themePanel.querySelector('[role="radio"][aria-checked="true"]')?.focus());
   window.setTimeout(() => { delete document.documentElement.dataset.themeChanging; }, 180);
@@ -165,6 +162,7 @@ function applyPreferences() {
   document.documentElement.dataset.theme = resolvedTheme();
   document.documentElement.dataset.layout = activeAppearance().layout;
   document.documentElement.dataset.themePreference = theme;
+  updateThemeChrome();
   elements.languageSelect.value = language;
   elements.themeChoices.setAttribute("aria-label", language === "id" ? "Pilihan tema" : "Theme choices");
   elements.closeThemePanel.setAttribute("aria-label", text("close"));

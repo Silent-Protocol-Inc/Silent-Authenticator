@@ -7,7 +7,7 @@
 [![GitHub top language](https://img.shields.io/github/languages/top/Silent-Protocol-Inc/Silent-Authenticator?style=flat-square)](https://github.com/Silent-Protocol-Inc/Silent-Authenticator)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=flat-square)](LICENSE)
 
-SAT is a local-first TOTP manager with an encrypted OpenSSL vault, a Bash CLI, and an optional Python web interface. Version 1.6.1 keeps the legacy `otp.vault` encryption format while separating vault policy, CLI commands, HTTP transport, and browser assets.
+SAT is a local-first TOTP manager with an encrypted OpenSSL vault, a Bash CLI, and an optional Python web interface. Version 1.7.0 keeps the legacy `otp.vault` encryption format while separating vault policy, CLI commands, HTTP transport, and browser assets.
 
 ## Project Structure
 
@@ -97,15 +97,15 @@ The screenshots below were captured with Google Chrome against a disposable vaul
 
 | Desktop | Tablet | Mobile | Appearance gallery |
 | --- | --- | --- | --- |
-| ![SAT Web UI desktop vault overview](docs/screenshots/1.6.0/desktop-overview.png) | ![SAT Web UI tablet vault overview](docs/screenshots/1.6.0/tablet-overview.png) | ![SAT Web UI mobile vault overview](docs/screenshots/1.6.0/mobile-overview.png) | ![SAT Web UI appearance gallery](docs/screenshots/1.6.0/appearance-gallery.png) |
+| ![SAT Web UI desktop vault overview](docs/screenshots/1.7.0/desktop-overview.png) | ![SAT Web UI tablet vault overview](docs/screenshots/1.7.0/tablet-overview.png) | ![SAT Web UI mobile vault overview](docs/screenshots/1.7.0/mobile-overview.png) | ![SAT Web UI appearance gallery](docs/screenshots/1.7.0/appearance-gallery.png) |
 
 <details>
-<summary>Full SAT 1.6.0 Web UI gallery (synthetic vault data)</summary>
+<summary>Full SAT 1.7.0 Web UI gallery (synthetic vault data)</summary>
 
-![Desktop vault overview](docs/screenshots/1.6.0/desktop-overview.png)
-![Tablet vault overview](docs/screenshots/1.6.0/tablet-overview.png)
-![Mobile vault overview](docs/screenshots/1.6.0/mobile-overview.png)
-![Appearance gallery](docs/screenshots/1.6.0/appearance-gallery.png)
+![Desktop vault overview](docs/screenshots/1.7.0/desktop-overview.png)
+![Tablet vault overview](docs/screenshots/1.7.0/tablet-overview.png)
+![Mobile vault overview](docs/screenshots/1.7.0/mobile-overview.png)
+![Appearance gallery](docs/screenshots/1.7.0/appearance-gallery.png)
 
 </details>
 
