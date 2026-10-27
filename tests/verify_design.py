@@ -38,16 +38,18 @@ def token(block: str, name: str) -> str:
 def main() -> None:
 	root_match = re.search(r"(?m)^\s*:root\s*\{(.*?)^\s*\}", CSS, re.DOTALL)
 	require(root_match is not None, "root token block")
-	theme_blocks = {"silent-obsidian": root_match.group(1)}
-	for theme_name, block in re.findall(r':root\[data-theme="([^"]+)"\]\{([^}]*)\}', CSS):
+	theme_blocks = {"signal-dark": root_match.group(1)}
+	for theme_name, block in re.findall(r':root\[data-theme="([^"]+)"\]\s*\{([^}]*)\}', CSS):
 		theme_blocks.setdefault(theme_name, block)
-	require(len(theme_blocks) == 10, "all ten theme token blocks")
+	require(set(theme_blocks) == {"signal-dark", "signal-light"}, "Signal dark and light token blocks")
 	for theme_name, block in theme_blocks.items():
 		pairs = (
 			("primary text", token(block, "text-primary"), token(block, "background")),
 			("muted text", token(block, "text-muted"), token(block, "background")),
-			("primary control", token(block, "text-inverse"), token(block, "accent")),
-			("hover control", token(block, "text-inverse"), token(block, "accent-hover")),
+			("primary control", token(block, "text-inverse"), token(block, "control")),
+			("hover control", token(block, "text-inverse"), token(block, "control-hover")),
+			("generated value", token(block, "value"), token(block, "background")),
+			("generated value soft", token(block, "value"), token(block, "value-soft")),
 		)
 		for role, foreground, background in pairs:
 			require(contrast(foreground, background) >= 4.5, f"{theme_name} {role} contrast")
@@ -63,15 +65,24 @@ def main() -> None:
 	require('class="state-panel__index"' in HTML, "empty and loading states need a stable visual anchor")
 	require('class="layout-nav__index"' in HTML and 'class="layout-nav__footer"' in HTML, "navigation must expose hierarchy and local status")
 	require('className = "theme-card__description"' in JS and 'className = "theme-card__selected"' in JS, "theme cards need descriptions and an explicit selected state")
-	require('className = "theme-card__number"' in JS, "theme gallery must expose a scannable appearance index")
-	require('[data-layout="briefing"] .workspace-frame' in CSS and '[data-layout="editorial"] .workspace-frame' in CSS, "appearance modes need structural composition variants")
+	require('className = "theme-card__number"' in JS, "appearance selector must expose a scannable index")
+	require('"signal-dark"' in JS and '"signal-light"' in JS, "Signal appearance choices")
+	legacy_themes = ("silent-obsidian", "cyber-teal", "midnight-indigo", "graphite-gold", "arctic-frost", "paper-terminal", "matrix-terminal", "crimson-security", "aurora-glass", "monochrome-zero")
+	require(not any(theme in HTML or theme in JS or theme in CSS for theme in legacy_themes), "legacy appearance identifiers must be removed")
+	require('[data-layout="instrument"]' in CSS, "Signal instrument composition")
+	require(':root[data-layout="instrument"] .workspace-frame{grid-template-columns:minmax(19rem,.82fr) minmax(0,1.18fr)' in CSS, "desktop workspace needs an asymmetric operations-and-vault workbench")
+	require(':root[data-layout="instrument"] .vault{grid-column:2;grid-row:3/span 2;align-self:stretch}' in CSS, "vault needs a dedicated wide workbench")
+	require(':root[data-layout="instrument"] .workspace-frame:has(.access-gate[hidden]) .vault{grid-row:2/span 2}' in CSS, "hidden access gate must not leave an empty desktop row")
+	require("--control:#33A891" in CSS and "--value:#D9BC90" in CSS, "Signal split-accent tokens")
+	require(".metric__value" in CSS and "color:var(--value)" in CSS, "generated metrics use the value channel")
+	require(".otp-card__code" in CSS and "font-variant-numeric:tabular-nums" in CSS, "OTP values use stable tabular figures")
 	require('rejected ? "unauthorized" : "locked"' in JS, "initial access state must be locked rather than an invalid-token error")
 	require('id="otpGrid"></ul>' in HTML, "OTP grid must not announce every timer update")
 	require('aria-current", "location"' in JS, "navigation exposes the active section")
-	require("prefers-reduced-motion: reduce" in CSS, "reduced-motion path")
-	require("forced-colors: active" in CSS, "forced-colors path")
-	require("min-height: var(--sat-control-size)" in CSS and "--sat-control-size: 2.75rem" in CSS, "44px control target")
-	require(".layout-nav a{min-height:var(--sat-control-size)}" in CSS, "mobile navigation must meet the 44px touch target")
+	require("prefers-reduced-motion:reduce" in CSS, "reduced-motion path")
+	require("forced-colors:active" in CSS, "forced-colors path")
+	require("min-height:var(--sat-control-size)" in CSS and "--sat-control-size:2.75rem" in CSS, "44px control target")
+	require(".layout-nav a{display:inline-flex" in CSS and "min-height:var(--sat-control-size)" in CSS, "navigation must meet the 44px touch target")
 	require("innerHTML" not in JS and "insertAdjacentHTML" not in JS, "untrusted text must use DOM APIs")
 	require(not re.search(r"token.*localStorage|localStorage.*token", JS, re.IGNORECASE), "token cannot use localStorage")
 	require("transition: all" not in CSS, "no transition-all")

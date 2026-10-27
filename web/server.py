@@ -214,7 +214,7 @@ class SatHandler(BaseHTTPRequestHandler):
 		print(json.dumps({"time": time.time(), "client": self.client_address[0], "method": self.command, "status": args[1]}), flush=True)
 
 	def end_headers(self) -> None:
-		self.send_header("Content-Security-Policy", "default-src 'none'; script-src 'self' 'sha256-OP4N4QEwybz1EK/uY4lNwOLwZMc7V6E+EHdAYuEjFXA='; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
+		self.send_header("Content-Security-Policy", "default-src 'none'; script-src 'self' 'sha256-mpEwv+uP6bjbnqiHqk/icLEQ2s8/8ySUQznaVeSnyYE='; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
 		self.send_header("Referrer-Policy", "no-referrer")
 		self.send_header("X-Content-Type-Options", "nosniff")
 		self.send_header("X-Frame-Options", "DENY")

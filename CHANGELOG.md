@@ -2,7 +2,18 @@
 
 All notable changes to SAT are documented here. SAT follows Semantic Versioning.
 
-## [Unreleased]
+## [1.7.0] - 2026-10-27
+
+### Changed
+
+- Rebuilt the SAT Web UI in the Signal (SIG–01) design system with one coherent instrument shell, independently tuned dark and light grounds, hairline elevation, and 2px geometry.
+- Replaced ten unrelated appearance systems with Signal dark, Signal light, and a system preference while preserving browser-only theme persistence.
+- Reserved teal for user actions and sand for OTP codes, counts, algorithms, timers, and other authenticator-produced values.
+- Reworked the workstation layout into an asymmetric operations-and-vault workbench while retaining a linear, responsive document flow on tablet and phone widths.
+
+### Accessibility
+
+- Preserved 44px controls, explicit focus, reduced-motion and forced-colours paths, native dialogs, labelled state channels, and measured WCAG AA contrast in both Signal grounds.
 
 ## [1.6.1] - 2026-10-26
 
